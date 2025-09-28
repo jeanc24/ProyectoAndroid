@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Vacío por ahora; sirve para documentar/centralizar claves si luego se usan Preferences) -->
+</PreferenceScreen>
