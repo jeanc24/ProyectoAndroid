@@ -1,14 +1,12 @@
 package com.example.proyectoandroid.data.repository.impl;
 
-import android.content.Context;
-
+import android.util.Log;
 import com.example.proyectoandroid.data.local.SessionManager;
 import com.example.proyectoandroid.data.model.User;
 import com.example.proyectoandroid.data.remote.FirebaseAuthDataSource;
 import com.example.proyectoandroid.data.remote.FirestoreDataSource;
 import com.example.proyectoandroid.data.repository.AuthRepository;
 import com.example.proyectoandroid.utils.Result;
-
 import java.util.concurrent.CompletableFuture;
 
 public class AuthRepositoryImpl implements AuthRepository {
@@ -18,8 +16,8 @@ public class AuthRepositoryImpl implements AuthRepository {
     private final SessionManager sessionManager;
 
     public AuthRepositoryImpl(FirebaseAuthDataSource authDataSource,
-                             FirestoreDataSource firestoreDataSource,
-                             SessionManager sessionManager) {
+                              FirestoreDataSource firestoreDataSource,
+                              SessionManager sessionManager) {
         this.authDataSource = authDataSource;
         this.firestoreDataSource = firestoreDataSource;
         this.sessionManager = sessionManager;
@@ -30,24 +28,28 @@ public class AuthRepositoryImpl implements AuthRepository {
         CompletableFuture<Result<User>> resultFuture = new CompletableFuture<>();
 
         authDataSource.registerUser(email, password, displayName)
-            .thenAccept(result -> {
-                if (result instanceof Result.Success) {
-                    User user = ((Result.Success<User>) result).getData();
+                .thenAccept(result -> {
+                    if (result instanceof Result.Success) {
+                        User user = ((Result.Success<User>) result).getData();
 
-                    firestoreDataSource.createOrUpdateUser(user)
-                        .thenAccept(firestoreResult -> {
-                            if (firestoreResult instanceof Result.Success) {
-                                sessionManager.saveUserSession(user);
-                                resultFuture.complete(result);
-                            } else {
-                                String errorMessage = ((Result.Error<User>) firestoreResult).getErrorMessage();
-                                resultFuture.complete(new Result.Error<>(errorMessage));
-                            }
-                        });
-                } else {
-                    resultFuture.complete(result);
-                }
-            });
+                        // NO guardar la sesión aquí
+                        firestoreDataSource.createOrUpdateUser(user)
+                                .thenAccept(firestoreResult -> {
+                                    if (!(firestoreResult instanceof Result.Success)) {
+                                        String errorMessage = ((Result.Error<?>) firestoreResult).getErrorMessage();
+                                        Log.w("AuthRepository", "No se pudo guardar en Firestore: " + errorMessage);
+                                    }
+                                })
+                                .exceptionally(throwable -> {
+                                    Log.w("AuthRepository", "Error Firestore: " + throwable.getMessage());
+                                    return null;
+                                });
+
+                        resultFuture.complete(result);
+                    } else {
+                        resultFuture.complete(result);
+                    }
+                });
 
         return resultFuture;
     }
@@ -57,20 +59,30 @@ public class AuthRepositoryImpl implements AuthRepository {
         CompletableFuture<Result<User>> resultFuture = new CompletableFuture<>();
 
         authDataSource.loginUser(email, password)
-            .thenAccept(result -> {
-                if (result instanceof Result.Success) {
-                    User user = ((Result.Success<User>) result).getData();
+                .thenAccept(result -> {
+                    if (result instanceof Result.Success) {
+                        User user = ((Result.Success<User>) result).getData();
 
-                    firestoreDataSource.updateUserOnlineStatus(user.getUid(), true)
-                        .thenRun(() -> {
-                            user.setOnline(true);
-                            sessionManager.saveUserSession(user);
-                            resultFuture.complete(result);
-                        });
-                } else {
-                    resultFuture.complete(result);
-                }
-            });
+                        // Guarda la sesión INMEDIATAMENTE
+                        sessionManager.saveUserSession(user);
+
+                        // Actualiza estado online en background (no bloquea login)
+                        firestoreDataSource.updateUserOnlineStatus(user.getUid(), true)
+                                .thenRun(() -> {
+                                    user.setOnline(true);
+                                    sessionManager.saveUserSession(user); // Actualiza sesión con estado online
+                                })
+                                .exceptionally(throwable -> {
+                                    Log.w("AuthRepository", "No se pudo actualizar estado online: " + throwable.getMessage());
+                                    return null;
+                                });
+
+                        // Completa el login inmediatamente (no espera Firestore)
+                        resultFuture.complete(result);
+                    } else {
+                        resultFuture.complete(result);
+                    }
+                });
 
         return resultFuture;
     }
@@ -84,9 +96,9 @@ public class AuthRepositoryImpl implements AuthRepository {
 
         if (authDataSource.getCurrentUser() != null) {
             User user = new User(
-                authDataSource.getCurrentUser().getUid(),
-                authDataSource.getCurrentUser().getEmail(),
-                authDataSource.getCurrentUser().getDisplayName()
+                    authDataSource.getCurrentUser().getUid(),
+                    authDataSource.getCurrentUser().getEmail(),
+                    authDataSource.getCurrentUser().getDisplayName()
             );
             sessionManager.saveUserSession(user);
             return user;
@@ -108,7 +120,6 @@ public class AuthRepositoryImpl implements AuthRepository {
         }
 
         authDataSource.signOut();
-
         sessionManager.clearSession();
     }
 
@@ -118,7 +129,6 @@ public class AuthRepositoryImpl implements AuthRepository {
         if (currentUser == null) {
             return CompletableFuture.completedFuture(new Result.Error<>("No user logged in"));
         }
-
         return firestoreDataSource.updateUserOnlineStatus(currentUser.getUid(), isOnline);
     }
 }

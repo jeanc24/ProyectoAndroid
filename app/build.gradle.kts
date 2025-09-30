@@ -8,8 +8,8 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.android.application"  // Cambiado para coincidir con google-services.json
-        minSdk = 26  // Aumentado a 26 para soportar adaptive icons
+        applicationId = "com.example.proyectoandroid"  // <-- CORRECTO!
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -37,15 +37,15 @@ android {
 }
 
 dependencies {
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("com.squareup.picasso:picasso:2.8")
     implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 
-    // Navigation Component
     implementation("androidx.navigation:navigation-fragment:2.7.7")
     implementation("androidx.navigation:navigation-ui:2.7.7")
 
-    // Gson para manejo de JSON en SessionManager
     implementation("com.google.code.gson:gson:2.10.1")
 
     implementation("androidx.appcompat:appcompat:1.7.1")

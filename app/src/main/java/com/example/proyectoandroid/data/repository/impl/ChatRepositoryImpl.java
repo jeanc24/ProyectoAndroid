@@ -8,8 +8,6 @@ import com.example.proyectoandroid.data.repository.ChatRepository;
 import com.example.proyectoandroid.utils.Result;
 import com.google.firebase.firestore.ListenerRegistration;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;

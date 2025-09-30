@@ -1,6 +1,5 @@
 package com.example.proyectoandroid;
 
-import android.content.Context;
 import android.util.Log;
 
 import com.example.proyectoandroid.data.model.Chat;

@@ -7,6 +7,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.proyectoandroid.data.model.Chat;
 
 import java.util.List;
 
@@ -30,9 +31,8 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     @Override
     public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
         Chat chat = chatList.get(position);
-        holder.chatTitle.setText(chat.title);
-        holder.chatLastMessage.setText(chat.lastMessage);
-        holder.chatAvatar.setImageResource(chat.avatarRes);
+        holder.chatTitle.setText(chat.getChatName());
+        holder.chatLastMessage.setText(chat.getLastMessageContent());
         holder.itemView.setOnClickListener(view -> {
             if (listener != null) listener.onChatClick(chat);
         });

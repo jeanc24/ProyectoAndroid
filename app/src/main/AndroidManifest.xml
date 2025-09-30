@@ -15,8 +15,9 @@
             android:theme="@style/Theme.ProyectoAndroid"
             tools:targetApi="31">
 
+        <!-- MainActivity como launcher -->
         <activity
-                android:name=".BackendTestActivity"
+                android:name=".MainActivity"
                 android:exported="true"
                 android:theme="@style/Theme.ProyectoAndroid">
             <intent-filter>
@@ -25,11 +26,19 @@
             </intent-filter>
         </activity>
 
+        <!-- Otras activities de tu app -->
         <activity
-                android:name=".MainActivity"
+                android:name=".chat.ChatActivity"
                 android:exported="true"
-                android:theme="@style/Theme.ProyectoAndroid">
-        </activity>
+                android:theme="@style/Theme.ProyectoAndroid" />
+        <activity
+                android:name=".login.LoginActivity"
+                android:exported="true"
+                android:theme="@style/Theme.ProyectoAndroid" />
+        <activity
+                android:name=".register.RegisterActivity"
+                android:exported="true"
+                android:theme="@style/Theme.ProyectoAndroid" />
 
     </application>
 
