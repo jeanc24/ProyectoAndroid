@@ -4,7 +4,6 @@ import com.google.firebase.firestore.DocumentId;
 import com.google.firebase.firestore.PropertyName;
 
 public class User {
-    @DocumentId
     private String uid;
     private String email;
     private String displayName;

@@ -15,6 +15,8 @@ import com.example.proyectoandroid.domain.usecase.GetCurrentUserUseCase;
 import com.example.proyectoandroid.domain.usecase.ListUserChatsUseCase;
 import com.example.proyectoandroid.domain.usecase.LoginUserUseCase;
 import com.example.proyectoandroid.utils.Result;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,10 +33,14 @@ public class MainActivity extends AppCompatActivity {
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        // Esta línea elimina el título por defecto ("ProyectoAndroid") del Toolbar
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
+        FloatingActionButton fab = findViewById(R.id.fab);
+        fab.setOnClickListener(v -> {
+            Intent intent = new Intent(this, com.example.proyectoandroid.CrearChatActivity.class);
+            startActivity(intent);
+        });
 
         rvChats = findViewById(R.id.rvChats);
         rvChats.setLayoutManager(new LinearLayoutManager(this));
