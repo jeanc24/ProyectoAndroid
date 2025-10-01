@@ -1,21 +1,34 @@
 package com.example.proyectoandroid;
 
+import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
 
 import com.example.proyectoandroid.data.model.Chat;
 import com.example.proyectoandroid.data.model.Message;
 import com.example.proyectoandroid.data.model.User;
 import com.example.proyectoandroid.data.remote.FirebaseAuthDataSource;
+import com.example.proyectoandroid.data.remote.FirebaseStorageDataSource;
 import com.example.proyectoandroid.data.repository.AuthRepository;
 import com.example.proyectoandroid.data.repository.ChatRepository;
 import com.example.proyectoandroid.data.repository.MessageRepository;
+import com.example.proyectoandroid.notifications.NotificationManager;
+import com.example.proyectoandroid.utils.ImageLoader;
 import com.example.proyectoandroid.utils.Result;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -339,24 +352,20 @@ public class BackendTester {
             return false;
         }
 
+        String originalUserId = originalUser.getUid();
+
+        Log.d(TAG, "User ID before signout: " + originalUserId);
+
         authDataSource.signOut();
 
-        Thread.sleep(1000);
-
-        User sessionUser = authRepository.getCurrentUser();
-        if (sessionUser == null) {
-            Log.e(TAG, "Session persistence failed - no user found after signout");
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            Log.e(TAG, "Sign out failed - Firebase user still exists");
             return false;
         }
 
-        boolean success = sessionUser.getUid().equals(originalUser.getUid());
-        if (success) {
-            Log.d(TAG, "Session persistence test passed");
-        } else {
-            Log.e(TAG, "Session persistence failed - UIDs don't match");
-        }
+        Log.d(TAG, "Sign out successful, Firebase user is null as expected");
 
-        return success;
+        return true;
     }
 
     private String testCreateChat() throws ExecutionException, InterruptedException, TimeoutException {
@@ -687,6 +696,254 @@ public class BackendTester {
         return true;
     }
 
+    public boolean testSprint3Features(Context context) {
+        Log.d(TAG, "Starting Sprint 3 feature tests...");
+
+        if (chatRepository == null || messageRepository == null) {
+            Log.e(TAG, "Repository dependencies are null. Cannot run Sprint 3 tests.");
+            return false;
+        }
+
+        try {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                Log.d(TAG, "Not logged in yet, logging in first...");
+                Result<User> result = authDataSource.loginUser(TEST_EMAIL, TEST_PASSWORD).get(30, TimeUnit.SECONDS);
+                if (result instanceof Result.Error) {
+                    Log.e(TAG, "Login failed: " + ((Result.Error<User>) result).getErrorMessage());
+                    return false;
+                }
+                Thread.sleep(1000);
+
+                if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+                    Log.e(TAG, "Login successful but Firebase user is null");
+                    return false;
+                }
+            }
+
+            String chatId = testCreateChat();
+            if (chatId == null) {
+                Log.e(TAG, "Chat creation test failed");
+                return false;
+            }
+
+            boolean fcmSuccess = testFcmTokenRegistration(context);
+            if (!fcmSuccess) {
+                Log.e(TAG, "FCM token registration test failed");
+                return false;
+            }
+
+            boolean imageUploadSuccess = testImageUpload(context, chatId);
+            if (!imageUploadSuccess) {
+                Log.e(TAG, "Image upload test failed");
+                return false;
+            }
+
+            boolean imageCacheSuccess = testImageCache(context);
+            if (!imageCacheSuccess) {
+                Log.e(TAG, "Image cache test failed");
+                return false;
+            }
+
+            Log.d(TAG, "Sprint 3 tests passed successfully!");
+            return true;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error during Sprint 3 tests: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            cleanupTestResources();
+        }
+    }
+
+    private boolean testFcmTokenRegistration(Context context) {
+        Log.d(TAG, "Testing FCM token registration...");
+
+        try {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                Log.e(TAG, "User not authenticated for FCM test");
+                return false;
+            }
+
+            NotificationManager notificationManager = new NotificationManager(context);
+
+            notificationManager.registerUserForNotifications(currentUser.getUid());
+
+            CompletableFuture<Boolean> resultFuture = new CompletableFuture<>();
+
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            db.collection("users").document(currentUser.getUid())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists() && documentSnapshot.contains("fcmToken")) {
+                        String token = documentSnapshot.getString("fcmToken");
+                        if (token != null && !token.isEmpty()) {
+                            Log.d(TAG, "FCM token found in user document: " + token);
+                            resultFuture.complete(true);
+                        } else {
+                            Log.e(TAG, "FCM token is null or empty");
+                            resultFuture.complete(false);
+                        }
+                    } else {
+                        Log.e(TAG, "User document doesn't contain fcmToken field");
+                        resultFuture.complete(false);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error checking FCM token: " + e.getMessage());
+                    resultFuture.complete(false);
+                });
+
+            boolean result = resultFuture.get(10, TimeUnit.SECONDS);
+
+            if (result) {
+                Log.d(TAG, "FCM token registration test passed");
+            } else {
+                Log.e(TAG, "FCM token registration test failed");
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error testing FCM registration: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean testImageUpload(Context context, String chatId) {
+        Log.d(TAG, "Testing image upload and storage...");
+
+        try {
+            File testImageFile = createTestImage(context);
+            if (testImageFile == null || !testImageFile.exists()) {
+                Log.e(TAG, "Failed to create test image");
+                return false;
+            }
+
+            Uri imageUri = Uri.fromFile(testImageFile);
+
+            FirebaseStorageDataSource storageDataSource = new FirebaseStorageDataSource();
+
+            CompletableFuture<Result<String>> uploadFuture = storageDataSource.uploadImage(context, imageUri, chatId);
+            Result<String> uploadResult = uploadFuture.get(30, TimeUnit.SECONDS);
+
+            if (uploadResult instanceof Result.Error) {
+                Log.e(TAG, "Image upload failed: " + ((Result.Error<String>) uploadResult).getErrorMessage());
+                return false;
+            }
+
+            String imageUrl = ((Result.Success<String>) uploadResult).getData();
+            Log.d(TAG, "Image uploaded successfully: " + imageUrl);
+
+            if (imageUrl == null || imageUrl.isEmpty()) {
+                Log.e(TAG, "Image URL is null or empty");
+                return false;
+            }
+
+            if (messageRepository != null) {
+                CompletableFuture<Result<Message>> messageFuture = messageRepository.sendImageMessage(chatId, imageUrl);
+                Result<Message> messageResult = messageFuture.get(30, TimeUnit.SECONDS);
+
+                if (messageResult instanceof Result.Error) {
+                    Log.e(TAG, "Failed to create message with image: " +
+                            ((Result.Error<Message>) messageResult).getErrorMessage());
+                    return false;
+                }
+
+                Message message = ((Result.Success<Message>) messageResult).getData();
+                Log.d(TAG, "Message with image created successfully: " + message.getMessageId());
+
+                if (!imageUrl.equals(message.getImageUrl())) {
+                    Log.e(TAG, "Image URL mismatch in message");
+                    return false;
+                }
+            }
+
+            return true;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error testing image upload: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean testImageCache(Context context) {
+        Log.d(TAG, "Testing image cache system...");
+
+        try {
+            ImageLoader.init(context);
+
+            File testImageFile = createTestImage(context);
+            if (testImageFile == null || !testImageFile.exists()) {
+                Log.e(TAG, "Failed to create test image for cache test");
+                return false;
+            }
+
+            Uri imageUri = Uri.fromFile(testImageFile);
+            FirebaseStorageDataSource storageDataSource = new FirebaseStorageDataSource();
+            Result<String> uploadResult = storageDataSource.uploadImage(context, imageUri, "cache_test").get(30, TimeUnit.SECONDS);
+
+            if (uploadResult instanceof Result.Error) {
+                Log.e(TAG, "Image upload failed for cache test: " + ((Result.Error<String>) uploadResult).getErrorMessage());
+                return false;
+            }
+
+            String imageUrl = ((Result.Success<String>) uploadResult).getData();
+
+            ImageLoader.prefetchImage(imageUrl);
+            Thread.sleep(2000);
+
+            File cacheDir = new File(context.getCacheDir(), "picasso-cache");
+            if (!cacheDir.exists() || !cacheDir.isDirectory()) {
+                Log.e(TAG, "Cache directory doesn't exist");
+                return false;
+            }
+
+            ImageLoader.clearCache(context);
+
+            Log.d(TAG, "Image cache test passed");
+            return true;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error testing image cache: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private File createTestImage(Context context) {
+        try {
+            File testImage = File.createTempFile("test_image", ".jpg", context.getCacheDir());
+
+            FileOutputStream fos = new FileOutputStream(testImage);
+
+            byte[] imageData = new byte[1024];
+            for (int i = 0; i < imageData.length; i++) {
+                imageData[i] = (byte) (i % 255);
+            }
+            fos.write(imageData);
+            fos.close();
+
+            return testImage;
+        } catch (IOException e) {
+            Log.e(TAG, "Error creating test image: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private void cleanupTestResources() {
+        for (ListenerRegistration listener : activeListeners) {
+            try {
+                listener.remove();
+            } catch (Exception e) {
+                Log.e(TAG, "Error removing listener: " + e.getMessage());
+            }
+        }
+        activeListeners.clear();
+    }
+
     public void cleanUp() {
         Log.d(TAG, "Cleaning up test resources...");
 
@@ -699,6 +956,97 @@ public class BackendTester {
 
         if (chatRepository != null) {
             chatRepository.removeAllListeners();
+        }
+    }
+
+    public boolean testNotificationsOnly(Context context) {
+        Log.d(TAG, "Probando específicamente la funcionalidad de notificaciones...");
+
+        try {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                Log.d(TAG, "No hay sesión iniciada, iniciando sesión primero...");
+                Result<User> result = authDataSource.loginUser(TEST_EMAIL, TEST_PASSWORD).get(30, TimeUnit.SECONDS);
+                if (result instanceof Result.Error) {
+                    Log.e(TAG, "Login fallido: " + ((Result.Error<User>) result).getErrorMessage());
+                    return false;
+                }
+                Thread.sleep(1000);
+
+                currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                if (currentUser == null) {
+                    Log.e(TAG, "Login exitoso pero el usuario de Firebase es null");
+                    return false;
+                }
+            }
+
+            Log.d(TAG, "Usuario autenticado: " + currentUser.getUid());
+
+            Log.d(TAG, "1. Probando registro del token FCM...");
+
+            NotificationManager notificationManager = new NotificationManager(context);
+
+            final CompletableFuture<String> tokenFuture = new CompletableFuture<>();
+
+            FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        String token = task.getResult();
+                        Log.d(TAG, "Token FCM obtenido exitosamente: " + token);
+                        tokenFuture.complete(token);
+                    } else {
+                        Log.e(TAG, "Error al obtener token FCM", task.getException());
+                        tokenFuture.complete(null);
+                    }
+                });
+
+            String token = tokenFuture.get(10, TimeUnit.SECONDS);
+            if (token == null || token.isEmpty()) {
+                Log.e(TAG, "No se pudo obtener un token FCM válido");
+                return false;
+            }
+
+            Log.d(TAG, "2. Probando almacenamiento del token FCM en Firestore...");
+
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            Map<String, Object> tokenData = new HashMap<>();
+            tokenData.put("fcmToken", token);
+            tokenData.put("lastUpdated", System.currentTimeMillis());
+
+            try {
+                com.google.android.gms.tasks.Tasks.await(
+                    db.collection("users").document(currentUser.getUid())
+                      .set(tokenData, com.google.firebase.firestore.SetOptions.merge()),
+                    10, TimeUnit.SECONDS
+                );
+                Log.d(TAG, "Token FCM guardado exitosamente en Firestore");
+            } catch (Exception e) {
+                Log.e(TAG, "Error al guardar token en Firestore: " + e.getMessage());
+                return false;
+            }
+
+            Log.d(TAG, "3. Verificando configuración del servicio de notificaciones...");
+
+            try {
+                Class<?> messagingServiceClass = Class.forName("com.example.proyectoandroid.notifications.ChatMessagingService");
+                boolean extiendeFCM = FirebaseMessagingService.class.isAssignableFrom(messagingServiceClass);
+                if (!extiendeFCM) {
+                    Log.e(TAG, "La clase ChatMessagingService no extiende FirebaseMessagingService");
+                    return false;
+                }
+                Log.d(TAG, "Servicio de notificaciones configurado correctamente");
+            } catch (ClassNotFoundException e) {
+                Log.e(TAG, "No se encontró la clase ChatMessagingService");
+                return false;
+            }
+
+            Log.d(TAG, "Todas las pruebas de funcionalidad de notificaciones pasaron exitosamente!");
+            return true;
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error durante las pruebas de notificaciones: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
     }
 }

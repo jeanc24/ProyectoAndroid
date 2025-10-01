@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.example.proyectoandroid.data.local.SessionManager;
 import com.example.proyectoandroid.data.remote.FirebaseAuthDataSource;
+import com.example.proyectoandroid.data.remote.FirebaseStorageDataSource;
 import com.example.proyectoandroid.data.remote.FirestoreDataSource;
 import com.example.proyectoandroid.data.repository.AuthRepository;
 import com.example.proyectoandroid.data.repository.ChatRepository;
@@ -24,6 +25,7 @@ public class ServiceLocator {
 
     private FirebaseAuthDataSource authDataSource;
     private FirestoreDataSource firestoreDataSource;
+    private FirebaseStorageDataSource storageDataSource;
     private SessionManager sessionManager;
 
     private AuthRepository authRepository;
@@ -65,6 +67,13 @@ public class ServiceLocator {
         return firestoreDataSource;
     }
 
+    public FirebaseStorageDataSource provideFirebaseStorageDataSource() {
+        if (storageDataSource == null) {
+            storageDataSource = new FirebaseStorageDataSource();
+        }
+        return storageDataSource;
+    }
+
     public SessionManager provideSessionManager() {
         if (sessionManager == null) {
             sessionManager = new SessionManager(applicationContext);
@@ -97,6 +106,7 @@ public class ServiceLocator {
         if (messageRepository == null) {
             messageRepository = new MessageRepositoryImpl(
                 provideFirestoreDataSource(),
+                provideFirebaseStorageDataSource(),
                 provideAuthRepository()
             );
         }

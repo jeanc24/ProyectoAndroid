@@ -1,11 +1,21 @@
 <resources>
     <string name="app_name">ProyectoAndroid</string>
     <string name="action_settings">Settings</string>
-    <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+
+    <string name="default_notification_channel_id">chat_messages</string>
+    <string name="notification_channel_name">Mensajes de chat</string>
+    <string name="notification_channel_description">Notificaciones de nuevos mensajes de chat</string>
+    <string name="new_message_notification_title">Nuevo mensaje</string>
+    <string name="new_message_notification_text">Has recibido un nuevo mensaje</string>
+
+    <string name="select_image">Seleccionar imagen</string>
+    <string name="image_upload_error">Error al subir la imagen</string>
+    <string name="image_compression_error">Error al comprimir la imagen</string>
+    <string name="storage_permission_required">Se requiere permiso para acceder a las imágenes</string>
 
     <string name="lorem_ipsum">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris volutpat, dolor id

@@ -1,7 +1,12 @@
 package com.example.proyectoandroid.data.repository.impl;
 
+import android.content.Context;
+import android.net.Uri;
+import android.util.Log;
+
 import com.example.proyectoandroid.data.model.Message;
 import com.example.proyectoandroid.data.model.User;
+import com.example.proyectoandroid.data.remote.FirebaseStorageDataSource;
 import com.example.proyectoandroid.data.remote.FirestoreDataSource;
 import com.example.proyectoandroid.data.repository.AuthRepository;
 import com.example.proyectoandroid.data.repository.MessageRepository;
@@ -15,11 +20,17 @@ import java.util.function.Consumer;
 
 public class MessageRepositoryImpl implements MessageRepository {
 
+    private static final String TAG = "MessageRepositoryImpl";
     private final FirestoreDataSource firestoreDataSource;
+    private final FirebaseStorageDataSource storageDataSource;
     private final AuthRepository authRepository;
 
-    public MessageRepositoryImpl(FirestoreDataSource firestoreDataSource, AuthRepository authRepository) {
+    public MessageRepositoryImpl(
+            FirestoreDataSource firestoreDataSource,
+            FirebaseStorageDataSource storageDataSource,
+            AuthRepository authRepository) {
         this.firestoreDataSource = firestoreDataSource;
+        this.storageDataSource = storageDataSource;
         this.authRepository = authRepository;
     }
 
@@ -56,6 +67,49 @@ public class MessageRepositoryImpl implements MessageRepository {
         );
 
         return firestoreDataSource.sendMessage(message);
+    }
+
+    @Override
+    public CompletableFuture<Result<Message>> uploadAndSendImageMessage(Context context, String chatId, Uri imageUri) {
+        CompletableFuture<Result<Message>> resultFuture = new CompletableFuture<>();
+
+        User currentUser = authRepository.getCurrentUser();
+        if (currentUser == null) {
+            resultFuture.complete(new Result.Error<>("User not logged in"));
+            return resultFuture;
+        }
+
+        if (imageUri == null) {
+            resultFuture.complete(new Result.Error<>("Invalid image URI"));
+            return resultFuture;
+        }
+
+        storageDataSource.uploadImage(context, imageUri, chatId)
+                .thenApply(result -> {
+                    if (result instanceof Result.Success) {
+                        String imageUrl = ((Result.Success<String>) result).getData();
+                        Log.d(TAG, "Image uploaded successfully: " + imageUrl);
+
+                        return sendImageMessage(chatId, imageUrl);
+                    } else {
+                        String errorMessage = ((Result.Error<String>) result).getErrorMessage();
+                        Log.e(TAG, "Failed to upload image: " + errorMessage);
+                        resultFuture.complete(new Result.Error<>(errorMessage));
+                        return null;
+                    }
+                })
+                .thenAccept(messageFuture -> {
+                    if (messageFuture != null) {
+                        messageFuture.thenAccept(resultFuture::complete);
+                    }
+                })
+                .exceptionally(e -> {
+                    Log.e(TAG, "Error uploading and sending image", e);
+                    resultFuture.complete(new Result.Error<>(e.getMessage()));
+                    return null;
+                });
+
+        return resultFuture;
     }
 
     @Override

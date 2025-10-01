@@ -1,0 +1,47 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Función para verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Función para comprobar si el usuario tiene acceso a un chat específico
+    function hasAccessToChat(chatId) {
+      return isAuthenticated() &&
+             firestore.exists(/databases/(default)/documents/chats/$(chatId)/participants/$(request.auth.uid));
+    }
+
+    // Reglas para las imágenes de los chats
+    match /images/{chatId}/{imageId} {
+      // Solo los miembros del chat pueden leer y subir imágenes
+      allow read: if hasAccessToChat(chatId);
+      allow create: if hasAccessToChat(chatId) &&
+                      // Limitar el tamaño de las imágenes a 5MB
+                      request.resource.size < 5 * 1024 * 1024 &&
+                      // Verificar que sea una imagen válida por su content-type
+                      request.resource.contentType.matches('image/.*');
+
+      // Solo el propietario de la imagen puede eliminarla
+      // (esto requeriría almacenar el ID del creador en los metadatos)
+      allow delete: if hasAccessToChat(chatId);
+    }
+
+    // Reglas para imágenes de perfil de usuario
+    match /profile_images/{userId} {
+      // Cualquiera puede ver las imágenes de perfil
+      allow read: if isAuthenticated();
+
+      // Solo el propio usuario puede subir o actualizar su imagen de perfil
+      allow write: if isAuthenticated() && request.auth.uid == userId &&
+                     request.resource.size < 2 * 1024 * 1024 &&
+                     request.resource.contentType.matches('image/.*');
+    }
+
+    // Denegar acceso por defecto
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

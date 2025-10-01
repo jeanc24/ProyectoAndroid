@@ -11,6 +11,7 @@ public class User {
     private String profileImageUrl;
     private long lastOnline;
     private boolean online;
+    private String fcmToken;
 
     public User() {}
 
@@ -21,6 +22,7 @@ public class User {
         this.lastOnline = System.currentTimeMillis();
         this.online = false;
         this.profileImageUrl = "";
+        this.fcmToken = "";
     }
 
     public String getUid() {
@@ -71,5 +73,13 @@ public class User {
 
     public void setOnline(boolean online) {
         this.online = online;
+    }
+
+    public String getFcmToken() {
+        return fcmToken;
+    }
+
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 }
