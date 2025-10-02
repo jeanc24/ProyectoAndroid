@@ -6,7 +6,6 @@
         android:layout_height="match_parent"
         android:padding="16dp">
 
-    <!-- Título opcional -->
     <TextView
             android:id="@+id/tvCreateChatTitle"
             android:layout_width="match_parent"
@@ -17,7 +16,6 @@
             android:gravity="center"
             android:paddingBottom="12dp"/>
 
-    <!-- Campo de búsqueda -->
     <EditText
             android:id="@+id/etSearch"
             android:layout_width="match_parent"
@@ -27,7 +25,6 @@
             android:padding="10dp"
             android:layout_marginBottom="8dp"/>
 
-    <!-- ProgressBar para carga de usuarios -->
     <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
@@ -36,7 +33,6 @@
             android:visibility="gone"
             android:layout_marginBottom="12dp"/>
 
-    <!-- Lista de usuarios -->
     <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvUsers"
             android:layout_width="match_parent"

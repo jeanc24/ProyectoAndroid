@@ -34,7 +34,10 @@ public class MessageRepositoryImpl implements MessageRepository {
                 chatId,
                 currentUser.getUid(),
                 currentUser.getDisplayName(),
-                content
+                currentUser.getEmail(),
+                content,
+                0,         // messageType: 0 para texto
+                null       // imageUrl: null para texto
         );
 
         return firestoreDataSource.sendMessage(message);
@@ -51,8 +54,10 @@ public class MessageRepositoryImpl implements MessageRepository {
                 chatId,
                 currentUser.getUid(),
                 currentUser.getDisplayName(),
-                imageUrl,
-                true
+                currentUser.getEmail(),
+                "",        // content vacío para imágenes
+                1,         // messageType: 1 para imagen
+                imageUrl   // imageUrl para imagen
         );
 
         return firestoreDataSource.sendMessage(message);

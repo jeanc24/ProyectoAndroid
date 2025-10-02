@@ -18,7 +18,7 @@ import com.example.proyectoandroid.utils.Result;
 public class RegisterActivity extends AppCompatActivity {
 
     private static final String TAG = "RegisterActivity";
-    private EditText etEmail, etPassword;
+    private EditText etEmail, etPassword, etDisplayName;
     private Button btnRegister, btnGoLogin;
     private ProgressBar progressBar;
     private LoginUserUseCase loginUseCase;
@@ -30,6 +30,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         etEmail = findViewById(R.id.etRegisterEmail);
         etPassword = findViewById(R.id.etRegisterPassword);
+        etDisplayName = findViewById(R.id.etRegisterDisplayName); // Agrega este campo al XML
         btnRegister = findViewById(R.id.btnRegister);
         btnGoLogin = findViewById(R.id.btnGoLogin);
         progressBar = findViewById(R.id.progressBar);
@@ -39,8 +40,9 @@ public class RegisterActivity extends AppCompatActivity {
         btnRegister.setOnClickListener(v -> {
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
+            String displayName = etDisplayName.getText().toString().trim();
 
-            if (email.isEmpty() || password.isEmpty()) {
+            if (email.isEmpty() || password.isEmpty() || displayName.isEmpty()) {
                 Toast.makeText(this, "Completa todos los campos", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -50,7 +52,7 @@ public class RegisterActivity extends AppCompatActivity {
                 return;
             }
 
-            performRegister(email, password);
+            checkEmailExistsAndRegister(email, password, displayName);
         });
 
         btnGoLogin.setOnClickListener(v -> {
@@ -59,11 +61,36 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
-    private void performRegister(String email, String password) {
+    private void checkEmailExistsAndRegister(String email, String password, String displayName) {
+        setLoadingState(true);
+
+        loginUseCase.execute(email, password)
+                .thenAccept(result -> runOnUiThread(() -> {
+                    setLoadingState(false);
+
+                    if (result.isSuccess()) {
+                        // El usuario ya existe con ese email
+                        Toast.makeText(this, "Este correo ya está registrado. Usa otro o inicia sesión.", Toast.LENGTH_LONG).show();
+                    } else {
+                        // El correo no existe, proceder con el registro
+                        performRegister(email, password, displayName);
+                    }
+                }))
+                .exceptionally(throwable -> {
+                    runOnUiThread(() -> {
+                        setLoadingState(false);
+                        // Si el error es "usuario no existe", se puede registrar; si es otro, mostrar mensaje
+                        performRegister(email, password, displayName);
+                    });
+                    return null;
+                });
+    }
+
+    private void performRegister(String email, String password, String displayName) {
         Log.d(TAG, "Iniciando registro para: " + email);
         setLoadingState(true);
 
-        loginUseCase.registerUser(email, password, "Usuario")
+        loginUseCase.registerUser(email, password, displayName)
                 .thenAccept(result -> {
                     Log.d(TAG, "Registro completado, resultado: " + (result.isSuccess() ? "exitoso" : "fallido"));
 

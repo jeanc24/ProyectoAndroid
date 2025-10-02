@@ -13,6 +13,8 @@ public class Chat {
     private List<String> participantIds;
     private String lastMessageContent;
     private String lastMessageSenderId;
+    private String lastMessageSenderName; // Nuevo campo
+    private String lastMessageSenderEmail; // Nuevo campo
     @ServerTimestamp
     private Date lastMessageTimestamp;
     private boolean isGroupChat;
@@ -29,6 +31,8 @@ public class Chat {
         this.participantIds.add(user2Id);
         this.isGroupChat = false;
         this.lastMessageContent = "";
+        this.lastMessageSenderName = "";
+        this.lastMessageSenderEmail = "";
     }
 
     public Chat(List<String> participantIds, String chatName) {
@@ -37,69 +41,39 @@ public class Chat {
         this.isGroupChat = true;
         this.lastMessageContent = "";
         this.chatImageUrl = "";
+        this.lastMessageSenderName = "";
+        this.lastMessageSenderEmail = "";
     }
 
-    public String getChatId() {
-        return chatId;
-    }
+    // Getters y setters existentes...
+    public String getChatId() { return chatId; }
+    public void setChatId(String chatId) { this.chatId = chatId; }
 
-    public void setChatId(String chatId) {
-        this.chatId = chatId;
-    }
+    public List<String> getParticipantIds() { return participantIds; }
+    public void setParticipantIds(List<String> participantIds) { this.participantIds = participantIds; }
 
-    public List<String> getParticipantIds() {
-        return participantIds;
-    }
+    public String getLastMessageContent() { return lastMessageContent; }
+    public void setLastMessageContent(String lastMessageContent) { this.lastMessageContent = lastMessageContent; }
 
-    public void setParticipantIds(List<String> participantIds) {
-        this.participantIds = participantIds;
-    }
+    public String getLastMessageSenderId() { return lastMessageSenderId; }
+    public void setLastMessageSenderId(String lastMessageSenderId) { this.lastMessageSenderId = lastMessageSenderId; }
 
-    public String getLastMessageContent() {
-        return lastMessageContent;
-    }
+    public Date getLastMessageTimestamp() { return lastMessageTimestamp; }
+    public void setLastMessageTimestamp(Date lastMessageTimestamp) { this.lastMessageTimestamp = lastMessageTimestamp; }
 
-    public void setLastMessageContent(String lastMessageContent) {
-        this.lastMessageContent = lastMessageContent;
-    }
+    public boolean isGroupChat() { return isGroupChat; }
+    public void setGroupChat(boolean groupChat) { isGroupChat = groupChat; }
 
-    public String getLastMessageSenderId() {
-        return lastMessageSenderId;
-    }
+    public String getChatName() { return chatName; }
+    public void setChatName(String chatName) { this.chatName = chatName; }
 
-    public void setLastMessageSenderId(String lastMessageSenderId) {
-        this.lastMessageSenderId = lastMessageSenderId;
-    }
+    public String getChatImageUrl() { return chatImageUrl; }
+    public void setChatImageUrl(String chatImageUrl) { this.chatImageUrl = chatImageUrl; }
 
-    public Date getLastMessageTimestamp() {
-        return lastMessageTimestamp;
-    }
+    // Nuevos getters y setters
+    public String getLastMessageSenderName() { return lastMessageSenderName; }
+    public void setLastMessageSenderName(String lastMessageSenderName) { this.lastMessageSenderName = lastMessageSenderName; }
 
-    public void setLastMessageTimestamp(Date lastMessageTimestamp) {
-        this.lastMessageTimestamp = lastMessageTimestamp;
-    }
-
-    public boolean isGroupChat() {
-        return isGroupChat;
-    }
-
-    public void setGroupChat(boolean groupChat) {
-        isGroupChat = groupChat;
-    }
-
-    public String getChatName() {
-        return chatName;
-    }
-
-    public void setChatName(String chatName) {
-        this.chatName = chatName;
-    }
-
-    public String getChatImageUrl() {
-        return chatImageUrl;
-    }
-
-    public void setChatImageUrl(String chatImageUrl) {
-        this.chatImageUrl = chatImageUrl;
-    }
+    public String getLastMessageSenderEmail() { return lastMessageSenderEmail; }
+    public void setLastMessageSenderEmail(String lastMessageSenderEmail) { this.lastMessageSenderEmail = lastMessageSenderEmail; }
 }

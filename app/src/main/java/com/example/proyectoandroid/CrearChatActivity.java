@@ -75,8 +75,10 @@ public class CrearChatActivity extends AppCompatActivity {
                     userList.clear();
                     for (com.google.firebase.firestore.QueryDocumentSnapshot doc : querySnapshot) {
                         User user = doc.toObject(User.class);
-                        // Evita NullPointerException verificando null antes de comparar
-                        if (currentUser != null && user.getUid() != null && currentUser.getUid() != null && !user.getUid().equals(currentUser.getUid())) {
+                        // Verificaciones null mejoradas
+                        if (currentUser != null && user != null &&
+                                user.getUid() != null && currentUser.getUid() != null &&
+                                !user.getUid().equals(currentUser.getUid())) {
                             userList.add(user);
                         }
                     }
@@ -89,7 +91,6 @@ public class CrearChatActivity extends AppCompatActivity {
                 });
     }
 
-    // Reemplaza streams por bucle para compatibilidad con minSdk < 24
     private void filterUsers(String query) {
         filteredList.clear();
         if (query == null || query.isEmpty()) {
