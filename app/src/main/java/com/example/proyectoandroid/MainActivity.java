@@ -15,6 +15,7 @@ import com.example.proyectoandroid.di.ServiceLocator;
 import com.example.proyectoandroid.domain.usecase.GetCurrentUserUseCase;
 import com.example.proyectoandroid.domain.usecase.ListUserChatsUseCase;
 import com.example.proyectoandroid.domain.usecase.LoginUserUseCase;
+import com.example.proyectoandroid.utils.ImageLoader;
 import com.example.proyectoandroid.utils.Result;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -38,6 +39,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Inicializar el caché de imágenes
+        ImageLoader.init(getApplicationContext());
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

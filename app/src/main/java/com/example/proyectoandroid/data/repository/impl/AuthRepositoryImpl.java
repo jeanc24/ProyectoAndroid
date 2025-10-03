@@ -1,19 +1,23 @@
 package com.example.proyectoandroid.data.repository.impl;
 
+import android.content.Context;
 import android.util.Log;
 import com.example.proyectoandroid.data.local.SessionManager;
 import com.example.proyectoandroid.data.model.User;
 import com.example.proyectoandroid.data.remote.FirebaseAuthDataSource;
 import com.example.proyectoandroid.data.remote.FirestoreDataSource;
 import com.example.proyectoandroid.data.repository.AuthRepository;
+import com.example.proyectoandroid.notifications.NotificationManager;
 import com.example.proyectoandroid.utils.Result;
 import java.util.concurrent.CompletableFuture;
 
 public class AuthRepositoryImpl implements AuthRepository {
 
+    private static final String TAG = "AuthRepositoryImpl";
     private final FirebaseAuthDataSource authDataSource;
     private final FirestoreDataSource firestoreDataSource;
     private final SessionManager sessionManager;
+    private Context context;
 
     public AuthRepositoryImpl(FirebaseAuthDataSource authDataSource,
                               FirestoreDataSource firestoreDataSource,
@@ -21,6 +25,7 @@ public class AuthRepositoryImpl implements AuthRepository {
         this.authDataSource = authDataSource;
         this.firestoreDataSource = firestoreDataSource;
         this.sessionManager = sessionManager;
+        this.context = sessionManager.getContext();
     }
 
     @Override
@@ -32,16 +37,15 @@ public class AuthRepositoryImpl implements AuthRepository {
                     if (result instanceof Result.Success) {
                         User user = ((Result.Success<User>) result).getData();
 
-                        // NO guardar la sesión aquí
                         firestoreDataSource.createOrUpdateUser(user)
                                 .thenAccept(firestoreResult -> {
                                     if (!(firestoreResult instanceof Result.Success)) {
                                         String errorMessage = ((Result.Error<?>) firestoreResult).getErrorMessage();
-                                        Log.w("AuthRepository", "No se pudo guardar en Firestore: " + errorMessage);
+                                        Log.w(TAG, "No se pudo guardar en Firestore: " + errorMessage);
                                     }
                                 })
                                 .exceptionally(throwable -> {
-                                    Log.w("AuthRepository", "Error Firestore: " + throwable.getMessage());
+                                    Log.w(TAG, "Error Firestore: " + throwable.getMessage());
                                     return null;
                                 });
 
@@ -63,21 +67,21 @@ public class AuthRepositoryImpl implements AuthRepository {
                     if (result instanceof Result.Success) {
                         User user = ((Result.Success<User>) result).getData();
 
-                        // Guarda la sesión INMEDIATAMENTE
                         sessionManager.saveUserSession(user);
 
-                        // Actualiza estado online en background (no bloquea login)
+                        NotificationManager notificationManager = new NotificationManager(context);
+                        notificationManager.registerUserForNotifications(user.getUid());
+
                         firestoreDataSource.updateUserOnlineStatus(user.getUid(), true)
                                 .thenRun(() -> {
                                     user.setOnline(true);
-                                    sessionManager.saveUserSession(user); // Actualiza sesión con estado online
+                                    sessionManager.saveUserSession(user);
                                 })
                                 .exceptionally(throwable -> {
-                                    Log.w("AuthRepository", "No se pudo actualizar estado online: " + throwable.getMessage());
+                                    Log.w(TAG, "No se pudo actualizar estado online: " + throwable.getMessage());
                                     return null;
                                 });
 
-                        // Completa el login inmediatamente (no espera Firestore)
                         resultFuture.complete(result);
                     } else {
                         resultFuture.complete(result);
@@ -100,35 +104,52 @@ public class AuthRepositoryImpl implements AuthRepository {
                     authDataSource.getCurrentUser().getEmail(),
                     authDataSource.getCurrentUser().getDisplayName()
             );
-            sessionManager.saveUserSession(user);
             return user;
         }
 
         return null;
     }
 
-    @Override
-    public boolean isUserLoggedIn() {
-        return sessionManager.isLoggedIn() || authDataSource.isUserLoggedIn();
+    public void logoutUser() {
+        User currentUser = getCurrentUser();
+        if (currentUser != null) {
+            NotificationManager notificationManager = new NotificationManager(context);
+            notificationManager.unregisterUserFromNotifications(currentUser.getUid());
+
+            firestoreDataSource.updateUserOnlineStatus(currentUser.getUid(), false)
+                    .exceptionally(throwable -> {
+                        Log.w(TAG, "Error al actualizar estado offline: " + throwable.getMessage());
+                        return null;
+                    });
+        }
+
+        sessionManager.clearUserSession();
+        authDataSource.signOut();
     }
 
     @Override
-    public void signOut() {
-        User currentUser = getCurrentUser();
-        if (currentUser != null) {
-            firestoreDataSource.updateUserOnlineStatus(currentUser.getUid(), false);
-        }
+    public boolean isUserLoggedIn() {
+        return authDataSource.isUserLoggedIn() && getCurrentUser() != null;
+    }
 
-        authDataSource.signOut();
-        sessionManager.clearSession();
+    public CompletableFuture<Result<Void>> resetPassword(String email) {
+        return authDataSource.resetPassword(email);
     }
 
     @Override
     public CompletableFuture<Result<Void>> updateUserOnlineStatus(boolean isOnline) {
         User currentUser = getCurrentUser();
         if (currentUser == null) {
-            return CompletableFuture.completedFuture(new Result.Error<>("No user logged in"));
+            return CompletableFuture.completedFuture(
+                new Result.Error<>("No user logged in")
+            );
         }
+
         return firestoreDataSource.updateUserOnlineStatus(currentUser.getUid(), isOnline);
+    }
+
+    @Override
+    public void signOut() {
+        logoutUser();
     }
 }

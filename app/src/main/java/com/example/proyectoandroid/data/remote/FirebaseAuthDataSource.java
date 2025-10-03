@@ -88,6 +88,24 @@ public class FirebaseAuthDataSource {
         return resultFuture;
     }
 
+    public CompletableFuture<Result<Void>> resetPassword(String email) {
+        CompletableFuture<Result<Void>> resultFuture = new CompletableFuture<>();
+
+        firebaseAuth.sendPasswordResetEmail(email)
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    resultFuture.complete(new Result.Success<>(null));
+                } else {
+                    String errorMessage = task.getException() != null ?
+                            task.getException().getMessage() :
+                            "Failed to send reset password email";
+                    resultFuture.complete(new Result.Error<>(errorMessage));
+                }
+            });
+
+        return resultFuture;
+    }
+
     public FirebaseUser getCurrentUser() {
         return firebaseAuth.getCurrentUser();
     }

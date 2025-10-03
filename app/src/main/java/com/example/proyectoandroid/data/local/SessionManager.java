@@ -14,9 +14,11 @@ public class SessionManager {
     private final SharedPreferences preferences;
     private final SharedPreferences.Editor editor;
     private final Gson gson;
+    private final Context context;
 
     public SessionManager(Context context) {
-        preferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.context = context.getApplicationContext();
+        preferences = this.context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         editor = preferences.edit();
         gson = new Gson();
     }
@@ -40,7 +42,7 @@ public class SessionManager {
         return preferences.getBoolean(KEY_IS_LOGGED_IN, false);
     }
 
-    public void clearSession() {
+    public void clearUserSession() {
         editor.clear();
         editor.apply();
     }
@@ -49,24 +51,18 @@ public class SessionManager {
         User user = getUserData();
         if (user == null) return;
 
-        try {
-            switch (key) {
-                case "displayName":
-                    user.setDisplayName((String) value);
-                    break;
-                case "profileImageUrl":
-                    user.setProfileImageUrl((String) value);
-                    break;
-                case "online":
-                    user.setOnline((Boolean) value);
-                    break;
-                case "lastOnline":
-                    user.setLastOnline((Long) value);
-                    break;
-            }
-            saveUserSession(user);
-        } catch (ClassCastException e) {
-
+        if (key.equals("online")) {
+            user.setOnline((Boolean) value);
+        } else if (key.equals("lastOnline")) {
+            user.setLastOnline((Long) value);
+        } else if (key.equals("fcmToken")) {
+            user.setFcmToken((String) value);
         }
+
+        saveUserSession(user);
+    }
+
+    public Context getContext() {
+        return context;
     }
 }

@@ -49,6 +49,18 @@ public class User {
     public long getLastOnline() { return lastOnline; }
     public void setLastOnline(long lastOnline) { this.lastOnline = lastOnline; }
 
+    public void setOnline(boolean online) {
+        this.online = online;
+    }
+
+    public String getFcmToken() {
+        return fcmToken;
+    }
+
+    public void setFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
+}
     public String getFcmToken() { return fcmToken; }
     public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
 }

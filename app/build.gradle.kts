@@ -43,6 +43,18 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
 
+    // Firebase Cloud Messaging para notificaciones
+    implementation("com.google.firebase:firebase-messaging")
+
+    // Firebase Storage para imágenes
+    implementation("com.google.firebase:firebase-storage")
+
+    // Librería para compresión de imágenes
+    implementation("id.zelory:compressor:3.0.1")
+
+    // OkHttp3 para networking y caché
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
     implementation("androidx.navigation:navigation-fragment:2.7.7")
     implementation("androidx.navigation:navigation-ui:2.7.7")
 
