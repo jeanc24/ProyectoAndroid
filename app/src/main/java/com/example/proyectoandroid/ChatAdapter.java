@@ -10,7 +10,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyectoandroid.data.model.Chat;
 import com.example.proyectoandroid.data.model.User;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder> {
@@ -20,7 +24,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     private String currentUserId;
     private OnChatClickListener listener;
 
-    // Nuevo constructor que recibe el mapa de usuarios y el id del usuario actual
     public ChatAdapter(List<Chat> chatList, Map<String, User> userMap, String currentUserId, OnChatClickListener listener) {
         this.chatList = chatList;
         this.userMap = userMap;
@@ -41,7 +44,6 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
         String displayName;
 
-        // Si es chat individual, muestra el nombre del otro usuario
         if (!chat.isGroupChat() && chat.getParticipantIds().size() == 2 && currentUserId != null) {
             String otherUserId = chat.getParticipantIds().get(0).equals(currentUserId)
                     ? chat.getParticipantIds().get(1)
@@ -52,12 +54,13 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
                     ? otherUser.getDisplayName()
                     : otherUserId;
         } else {
-            // Grupo o sin datos suficientes
             displayName = chat.getChatName();
         }
 
         holder.chatTitle.setText(displayName);
         holder.chatLastMessage.setText(chat.getLastMessageContent());
+
+        holder.chatTimestamp.setText(formatTimestamp(chat.getLastMessageTimestamp()));
 
         holder.itemView.setOnClickListener(view -> {
             if (listener != null) listener.onChatClick(chat);
@@ -69,14 +72,31 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         return chatList.size();
     }
 
+    private String formatTimestamp(Date date) {
+        if (date == null) return "";
+        Calendar today = Calendar.getInstance();
+        Calendar msgDate = Calendar.getInstance();
+        msgDate.setTime(date);
+
+        boolean isToday = today.get(Calendar.YEAR) == msgDate.get(Calendar.YEAR)
+                && today.get(Calendar.DAY_OF_YEAR) == msgDate.get(Calendar.DAY_OF_YEAR);
+
+        if (isToday) {
+            return new SimpleDateFormat("HH:mm", Locale.getDefault()).format(date);
+        } else {
+            return new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date);
+        }
+    }
+
     public static class ChatViewHolder extends RecyclerView.ViewHolder {
         ImageView chatAvatar;
-        TextView chatTitle, chatLastMessage;
+        TextView chatTitle, chatLastMessage, chatTimestamp;
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
             chatAvatar = itemView.findViewById(R.id.chatAvatar);
             chatTitle = itemView.findViewById(R.id.chatTitle);
             chatLastMessage = itemView.findViewById(R.id.chatLastMessage);
+            chatTimestamp = itemView.findViewById(R.id.chatTimestamp);
         }
     }
 

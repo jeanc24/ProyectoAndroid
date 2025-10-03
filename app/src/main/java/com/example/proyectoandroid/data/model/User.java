@@ -3,8 +3,10 @@ package com.example.proyectoandroid.data.model;
 import com.google.firebase.firestore.DocumentId;
 
 public class User {
+
     @DocumentId
-    private String documentId; // Cambio importante aquí
+    private String documentId; // Normalmente igual al uid, pero NO es necesario si usas uid como id.
+
     private String uid;
     private String email;
     private String displayName;
@@ -49,18 +51,6 @@ public class User {
     public long getLastOnline() { return lastOnline; }
     public void setLastOnline(long lastOnline) { this.lastOnline = lastOnline; }
 
-    public void setOnline(boolean online) {
-        this.online = online;
-    }
-
-    public String getFcmToken() {
-        return fcmToken;
-    }
-
-    public void setFcmToken(String fcmToken) {
-        this.fcmToken = fcmToken;
-    }
-}
     public String getFcmToken() { return fcmToken; }
     public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
 }
