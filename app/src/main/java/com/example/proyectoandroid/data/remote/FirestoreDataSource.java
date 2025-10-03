@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 public class FirestoreDataSource {
 
-    private final FirebaseFirestore firestore;
+    public final FirebaseFirestore firestore;
     private final Map<String, ListenerRegistration> messageListeners = new HashMap<>();
     private final Map<String, ListenerRegistration> chatListeners = new HashMap<>();
     private final Map<String, ListenerRegistration> userStatusListeners = new HashMap<>();

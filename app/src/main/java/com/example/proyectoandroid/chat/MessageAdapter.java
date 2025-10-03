@@ -72,13 +72,29 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         if (holder instanceof TextMessageViewHolder) {
             TextMessageViewHolder h = (TextMessageViewHolder) holder;
             h.tvText.setText(msg.getContent());
-            h.tvSender.setText(msg.getSenderName());
+
+            // Mostrar nombre o email del remitente
+            String senderDisplay = "";
+            if (msg.getSenderName() != null && !msg.getSenderName().isEmpty()) {
+                senderDisplay = msg.getSenderName();
+            } else if (msg.getSenderEmail() != null && !msg.getSenderEmail().isEmpty()) {
+                senderDisplay = msg.getSenderEmail();
+            }
+            h.tvSender.setText(senderDisplay);
             h.tvTimestamp.setText(formatTimestamp(msg.getTimestamp()));
         }
 
         if (holder instanceof ImageMessageViewHolder) {
             ImageMessageViewHolder h = (ImageMessageViewHolder) holder;
-            h.tvSender.setText(msg.getSenderName());
+
+            // Mostrar nombre o email del remitente
+            String senderDisplay = "";
+            if (msg.getSenderName() != null && !msg.getSenderName().isEmpty()) {
+                senderDisplay = msg.getSenderName();
+            } else if (msg.getSenderEmail() != null && !msg.getSenderEmail().isEmpty()) {
+                senderDisplay = msg.getSenderEmail();
+            }
+            h.tvSender.setText(senderDisplay);
             h.tvTimestamp.setText(formatTimestamp(msg.getTimestamp()));
             if (!TextUtils.isEmpty(msg.getImageUrl())) {
                 Picasso.get().load(msg.getImageUrl()).into(h.ivImageMessage);
@@ -91,7 +107,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         return messages.size();
     }
 
-    // Métodos para actualizar la lista
+    // Métodos para actualizar la lista con prevención de duplicados
     public void setMessages(List<Message> msgs) {
         messages.clear();
         // Ordenar mensajes por timestamp (más antiguos primero)
@@ -102,16 +118,22 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     public void addMessage(Message msg) {
-        messages.add(msg);
-        int position = messages.size() - 1;
-        notifyItemInserted(position);
+        // Verificar si el mensaje ya existe
+        boolean exists = false;
+        for (Message existingMsg : messages) {
+            if (existingMsg.getMessageId() != null &&
+                    existingMsg.getMessageId().equals(msg.getMessageId())) {
+                exists = true;
+                break;
+            }
+        }
 
-        // Animación para el nuevo mensaje
-        animateNewMessage(position);
-    }
-
-    private void animateNewMessage(int position) {
-        // Esta animación se aplicará automáticamente cuando se haga scroll
+        // Solo agregar si no existe
+        if (!exists) {
+            messages.add(msg);
+            int position = messages.size() - 1;
+            notifyItemInserted(position);
+        }
     }
 
     // ViewHolders

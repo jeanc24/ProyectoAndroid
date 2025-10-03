@@ -18,14 +18,14 @@
             android:theme="@style/Theme.ProyectoAndroid"
             tools:targetApi="31">
 
-        <!-- MainActivity -->
+        <!-- MainActivity como launcher -->
         <activity
                 android:name=".MainActivity"
                 android:exported="true"
                 android:theme="@style/Theme.ProyectoAndroid">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
@@ -34,22 +34,25 @@
                 android:name=".BackendTestActivity"
                 android:exported="true"
                 android:label="Backend Tests"
-                android:theme="@style/Theme.ProyectoAndroid">
-        </activity>
+                android:theme="@style/Theme.ProyectoAndroid"/>
 
         <!-- Otras activities de tu app -->
         <activity
                 android:name=".chat.ChatActivity"
                 android:exported="true"
-                android:theme="@style/Theme.ProyectoAndroid" />
+                android:theme="@style/Theme.ProyectoAndroid"/>
         <activity
                 android:name=".login.LoginActivity"
                 android:exported="true"
-                android:theme="@style/Theme.ProyectoAndroid" />
+                android:theme="@style/Theme.ProyectoAndroid"/>
         <activity
                 android:name=".register.RegisterActivity"
                 android:exported="true"
-                android:theme="@style/Theme.ProyectoAndroid" />
+                android:theme="@style/Theme.ProyectoAndroid"/>
+        <activity
+                android:name=".CrearChatActivity"
+                android:exported="true"
+                android:theme="@style/Theme.ProyectoAndroid"/>
 
         <!-- Servicio de Firebase Cloud Messaging -->
         <service
@@ -71,5 +74,4 @@
             android:resource="@color/notification_color" />
 
     </application>
-
 </manifest>
