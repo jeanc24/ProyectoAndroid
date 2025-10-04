@@ -49,8 +49,18 @@ dependencies {
     // Firebase Storage para imágenes
     implementation("com.google.firebase:firebase-storage")
 
+    // Firebase App Check providers
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+    debugImplementation("com.google.firebase:firebase-appcheck-debug")
+
     // Librería para compresión de imágenes
     implementation("id.zelory:compressor:3.0.1")
+
+    // PhotoView para zoom en imágenes
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
+
+    // coordinatorlayout para activity_image_viewer.xml
+    implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
 
     // OkHttp3 para networking y caché
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

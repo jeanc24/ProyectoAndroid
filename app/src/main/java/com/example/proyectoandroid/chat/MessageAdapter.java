@@ -113,10 +113,18 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             }
             h.tvSender.setText(senderDisplay);
             h.tvTimestamp.setText(formatTimestamp(msg.getTimestamp()));
+
             if (!TextUtils.isEmpty(msg.getImageUrl())) {
                 Picasso.get().load(msg.getImageUrl()).into(h.ivImageMessage);
+
+                final String imageUrl = msg.getImageUrl();
+                final String sender = senderDisplay;
+                h.ivImageMessage.setOnClickListener(view -> {
+                    ImageViewerActivity.launch(view.getContext(), imageUrl, sender);
+                });
             } else {
                 h.ivImageMessage.setImageDrawable(null);
+                h.ivImageMessage.setOnClickListener(null); // Quitar listener si no hay imagen
             }
         }
     }

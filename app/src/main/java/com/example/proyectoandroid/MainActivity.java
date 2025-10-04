@@ -25,6 +25,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -134,14 +135,37 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_logout) {
-            LoginUserUseCase loginUserUseCase = ServiceLocator.getInstance(getApplicationContext()).provideLoginUserUseCase();
-            loginUserUseCase.signOut();
-            Toast.makeText(this, "Sesión cerrada", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(this, com.example.proyectoandroid.login.LoginActivity.class));
-            finish();
+            showLogoutDialog();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showLogoutDialog() {
+        User currentUser = ServiceLocator.getInstance(getApplicationContext()).provideGetCurrentUserUseCase().execute();
+        String display = null;
+        if (currentUser != null) {
+            if (currentUser.getDisplayName() != null && !currentUser.getDisplayName().isEmpty()) {
+                display = currentUser.getDisplayName();
+            } else if (currentUser.getEmail() != null && !currentUser.getEmail().isEmpty()) {
+                display = currentUser.getEmail();
+            } else {
+                display = currentUser.getUid();
+            }
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(display != null ? display : getString(R.string.app_name))
+                .setMessage("¿Deseas cerrar sesión?")
+                .setPositiveButton("Cerrar sesión", (dialog, which) -> {
+                    LoginUserUseCase loginUserUseCase = ServiceLocator.getInstance(getApplicationContext()).provideLoginUserUseCase();
+                    loginUserUseCase.signOut();
+                    Toast.makeText(this, "Sesión cerrada", Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(this, com.example.proyectoandroid.login.LoginActivity.class));
+                    finish();
+                })
+                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 
     private void openChat(Chat chat) {

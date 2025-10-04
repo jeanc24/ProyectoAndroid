@@ -47,6 +47,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <activity
+                android:name=".chat.ImageViewerActivity"
+                android:theme="@style/Theme.ProyectoAndroid"
+                android:exported="false"/>
+
         <activity
                 android:name=".login.LoginActivity"
                 android:exported="true"

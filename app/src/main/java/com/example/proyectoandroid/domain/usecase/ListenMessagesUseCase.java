@@ -1,5 +1,8 @@
 package com.example.proyectoandroid.domain.usecase;
 
+import android.content.Context;
+import android.net.Uri;
+
 import com.example.proyectoandroid.data.model.Message;
 import com.example.proyectoandroid.data.repository.MessageRepository;
 import com.example.proyectoandroid.utils.Result;
@@ -94,6 +97,10 @@ public class ListenMessagesUseCase {
 
     public CompletableFuture<Result<Message>> sendImageMessage(String chatId, String imageUrl) {
         return messageRepository.sendImageMessage(chatId, imageUrl);
+    }
+
+    public CompletableFuture<Result<Message>> uploadAndSendImageMessage(Context context, String chatId, Uri imageUri) {
+        return messageRepository.uploadAndSendImageMessage(context, chatId, imageUri);
     }
 
     public void cleanup() {

@@ -61,7 +61,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
         String lastMsg = chat.getLastMessageContent();
         if (lastMsg == null) lastMsg = "";
-        holder.chatLastMessage.setText(lastMsg);
+        holder.chatLastMessage.setText(lastMsg.trim().isEmpty() ? "[Imagen]" : lastMsg);
 
         holder.chatTimestamp.setText(formatTimestamp(chat.getLastMessageTimestamp()));
 

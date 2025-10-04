@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.recyclerview.widget.RecyclerView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,6 +26,7 @@ public class ChatActivity extends AppCompatActivity {
     private RecyclerView rvMessages;
     private EditText etMessage;
     private Button btnSend;
+    private Button btnAttachImage; // new
 
     private MessageAdapter messageAdapter;
     private List<Message> messagesList = new ArrayList<>();
@@ -34,6 +37,9 @@ public class ChatActivity extends AppCompatActivity {
 
     private ListenMessagesUseCase listenMessagesUseCase;
     private ListenerRegistration messagesListener;
+
+    // Image picker launcher
+    private ActivityResultLauncher<String> pickImageLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +55,7 @@ public class ChatActivity extends AppCompatActivity {
         rvMessages = findViewById(R.id.rvMessages);
         etMessage = findViewById(R.id.etMessage);
         btnSend = findViewById(R.id.btnSend);
+        btnAttachImage = findViewById(R.id.btnAttachImage);
 
         chatId = getIntent().getStringExtra("chatId");
         chatTitle = getIntent().getStringExtra("chatTitle");
@@ -98,6 +105,39 @@ public class ChatActivity extends AppCompatActivity {
                         }
                     }));
         });
+
+        // Register image picker
+        pickImageLauncher = registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+            if (uri != null) {
+                setSendingEnabled(false);
+                Toast.makeText(this, "Subiendo imagen...", Toast.LENGTH_SHORT).show();
+                listenMessagesUseCase
+                        .uploadAndSendImageMessage(getApplicationContext(), chatId, uri)
+                        .thenAccept(result -> runOnUiThread(() -> {
+                            setSendingEnabled(true);
+                            if (result.isSuccess()) {
+                                Toast.makeText(this, "Imagen enviada", Toast.LENGTH_SHORT).show();
+                            } else {
+                                String error = ((Result.Error<?>) result).getErrorMessage();
+                                Toast.makeText(this, "Error enviando imagen: " + error, Toast.LENGTH_LONG).show();
+                            }
+                        }));
+            }
+        });
+
+        btnAttachImage.setOnClickListener(v -> {
+            try {
+                pickImageLauncher.launch("image/*");
+            } catch (Exception e) {
+                Toast.makeText(this, "No se pudo abrir el selector de imágenes", Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void setSendingEnabled(boolean enabled) {
+        btnSend.setEnabled(enabled);
+        btnAttachImage.setEnabled(enabled);
+        etMessage.setEnabled(enabled);
     }
 
     @Override
