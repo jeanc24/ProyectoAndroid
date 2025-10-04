@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Depuración de Notificaciones"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        android:layout_marginBottom="16dp"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_token"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Token FCM: Cargando..."
+                android:textIsSelectable="true"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:id="@+id/tv_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Estado: Esperando acción..."
+                android:layout_marginBottom="16dp"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_get_token"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Obtener Token FCM"/>
+
+        <Button
+            android:id="@+id/btn_test_local"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Probar Notificación Local"/>
+
+        <Button
+            android:id="@+id/btn_check_connection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Verificar Conexión"/>
+
+        <Button
+            android:id="@+id/btn_back"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Volver"/>
+    </LinearLayout>
+</LinearLayout>
+
