@@ -1,10 +1,10 @@
 package com.example.proyectoandroid.chat;
 
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import androidx.recyclerview.widget.RecyclerView;
-import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -12,16 +12,15 @@ import com.example.proyectoandroid.R;
 import com.example.proyectoandroid.data.model.Message;
 import com.example.proyectoandroid.data.model.User;
 import com.example.proyectoandroid.di.ServiceLocator;
-import com.example.proyectoandroid.domain.usecase.GetCurrentUserUseCase;
 import com.example.proyectoandroid.domain.usecase.ListenMessagesUseCase;
 import com.example.proyectoandroid.utils.Result;
+import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.firestore.ListenerRegistration;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChatActivity extends AppCompatActivity {
 
-    private TextView tvChatTitle;
     private RecyclerView rvMessages;
     private EditText etMessage;
     private Button btnSend;
@@ -41,14 +40,21 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        tvChatTitle = findViewById(R.id.tvChatTitle);
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
         rvMessages = findViewById(R.id.rvMessages);
         etMessage = findViewById(R.id.etMessage);
         btnSend = findViewById(R.id.btnSend);
 
         chatId = getIntent().getStringExtra("chatId");
         chatTitle = getIntent().getStringExtra("chatTitle");
-        tvChatTitle.setText(chatTitle != null ? chatTitle : "Chat");
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle(chatTitle != null ? chatTitle : "Chat");
+        }
 
         User currentUser = ServiceLocator.getInstance(getApplicationContext())
                 .provideGetCurrentUserUseCase().execute();
@@ -72,7 +78,7 @@ public class ChatActivity extends AppCompatActivity {
                     rvMessages.scrollToPosition(messageAdapter.getItemCount() - 1);
                 }),
                 updatedMessage -> runOnUiThread(() -> {
-                    // Actualización de mensaje si lo necesitas
+                    // Manejar actualización si se requiere
                 })
         );
 
@@ -92,6 +98,21 @@ public class ChatActivity extends AppCompatActivity {
                         }
                     }));
         });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        getOnBackPressedDispatcher().onBackPressed();
+        return true;
     }
 
     @Override

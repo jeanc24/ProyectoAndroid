@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -17,6 +18,7 @@ import com.example.proyectoandroid.di.ServiceLocator;
 import com.example.proyectoandroid.domain.usecase.CreateChatUseCase;
 import com.example.proyectoandroid.domain.usecase.GetCurrentUserUseCase;
 import com.example.proyectoandroid.utils.Result;
+import com.google.android.material.appbar.MaterialToolbar;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +38,13 @@ public class CrearChatActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_chat);
+
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Buscar contacto");
+        }
 
         etSearch = findViewById(R.id.etSearch);
         rvUsers = findViewById(R.id.rvUsers);
@@ -63,6 +72,15 @@ public class CrearChatActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable s) {}
         });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void loadUsers() {

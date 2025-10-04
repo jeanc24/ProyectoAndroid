@@ -20,9 +20,11 @@ public class Chat {
     private boolean isGroupChat;
     private String chatName;
     private String chatImageUrl;
+    private boolean lastMessageRead;
 
     public Chat() {
         participantIds = new ArrayList<>();
+        lastMessageRead = true;
     }
 
     public Chat(String user1Id, String user2Id) {
@@ -33,6 +35,7 @@ public class Chat {
         this.lastMessageContent = "";
         this.lastMessageSenderName = "";
         this.lastMessageSenderEmail = "";
+        this.lastMessageRead = true;
     }
 
     public Chat(List<String> participantIds, String chatName) {
@@ -43,6 +46,7 @@ public class Chat {
         this.chatImageUrl = "";
         this.lastMessageSenderName = "";
         this.lastMessageSenderEmail = "";
+        this.lastMessageRead = true;
     }
 
     // Getters y setters existentes...
@@ -76,4 +80,7 @@ public class Chat {
 
     public String getLastMessageSenderEmail() { return lastMessageSenderEmail; }
     public void setLastMessageSenderEmail(String lastMessageSenderEmail) { this.lastMessageSenderEmail = lastMessageSenderEmail; }
+
+    public boolean isLastMessageRead() { return lastMessageRead; }
+    public void setLastMessageRead(boolean lastMessageRead) { this.lastMessageRead = lastMessageRead; }
 }

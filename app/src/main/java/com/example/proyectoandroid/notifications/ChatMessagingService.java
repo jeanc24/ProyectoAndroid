@@ -26,23 +26,35 @@ public class ChatMessagingService extends FirebaseMessagingService {
 
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
-        Map<String, String> data = remoteMessage.getData();
+        String title = null;
+        String body = null;
+        String chatId = null;
+        String senderId = null;
 
-        if (data.size() > 0) {
-            String title = data.get("title");
-            String body = data.get("body");
-            String chatId = data.get("chatId");
-            String senderId = data.get("senderId");
-
-            AuthRepository authRepository = ServiceLocator.getInstance(this).provideAuthRepository();
-            User currentUser = authRepository.getCurrentUser();
-
-            if (currentUser != null && !currentUser.getUid().equals(senderId)) {
-                sendNotification(title != null ? title : getString(R.string.new_message_notification_title),
-                        body != null ? body : getString(R.string.new_message_notification_text),
-                        chatId);
-            }
+        if (remoteMessage.getNotification() != null) {
+            title = remoteMessage.getNotification().getTitle();
+            body = remoteMessage.getNotification().getBody();
         }
+
+        Map<String, String> data = remoteMessage.getData();
+        if (data != null && !data.isEmpty()) {
+            if (title == null) title = data.get("title");
+            if (body == null) body = data.get("body");
+            chatId = data.get("chatId");
+            senderId = data.get("senderId");
+        }
+
+        AuthRepository authRepository = ServiceLocator.getInstance(this).provideAuthRepository();
+        User currentUser = authRepository.getCurrentUser();
+
+        if (currentUser == null || (senderId != null && currentUser.getUid().equals(senderId))) {
+            return;
+        }
+
+        if (title == null) title = getString(R.string.new_message_notification_title);
+        if (body == null) body = getString(R.string.new_message_notification_text);
+
+        sendNotification(title, body, chatId);
     }
 
     @Override
@@ -77,9 +89,12 @@ public class ChatMessagingService extends FirebaseMessagingService {
                         .setSmallIcon(R.drawable.ic_notification)
                         .setContentTitle(title)
                         .setContentText(messageBody)
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(messageBody))
                         .setAutoCancel(true)
                         .setSound(defaultSoundUri)
                         .setContentIntent(pendingIntent)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                         .setColor(getResources().getColor(R.color.notification_color, getTheme()));
 
         android.app.NotificationManager notificationManager =
@@ -94,6 +109,7 @@ public class ChatMessagingService extends FirebaseMessagingService {
             notificationManager.createNotificationChannel(channel);
         }
 
-        notificationManager.notify(0, notificationBuilder.build());
+        int notificationId = (chatId != null) ? chatId.hashCode() : 0;
+        notificationManager.notify(notificationId, notificationBuilder.build());
     }
 }

@@ -8,6 +8,7 @@ import com.example.proyectoandroid.utils.Result;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -193,9 +194,12 @@ public class FirestoreDataSource {
         DocumentReference chatRef = firestore.collection(FirebaseCollections.CHATS).document(chatId);
 
         Map<String, Object> updates = new HashMap<>();
-        updates.put("lastMessageContent", message.getContent());
+        updates.put("lastMessageContent", message.getMessageType() == 1 ? "" : message.getContent());
         updates.put("lastMessageSenderId", message.getSenderId());
-        updates.put("lastMessageTimestamp", message.getTimestamp());
+        updates.put("lastMessageSenderName", message.getSenderName() != null ? message.getSenderName() : "");
+        updates.put("lastMessageSenderEmail", message.getSenderEmail() != null ? message.getSenderEmail() : "");
+        updates.put("lastMessageTimestamp", FieldValue.serverTimestamp());
+        updates.put("lastMessageRead", false);
 
         chatRef.update(updates)
             .addOnSuccessListener(aVoid -> resultFuture.complete(new Result.Success<>(null)))
@@ -407,7 +411,12 @@ public class FirestoreDataSource {
             .get()
             .addOnSuccessListener(queryDocumentSnapshots -> {
                 if (queryDocumentSnapshots.isEmpty()) {
-                    resultFuture.complete(new Result.Success<>(null));
+                    // También marcar el chat como leído para ocultar resaltado
+                    firestore.collection(FirebaseCollections.CHATS)
+                        .document(chatId)
+                        .update("lastMessageRead", true)
+                        .addOnSuccessListener(a -> resultFuture.complete(new Result.Success<>(null)))
+                        .addOnFailureListener(e -> resultFuture.complete(new Result.Error<>(e.getMessage())));
                     return;
                 }
 
@@ -423,7 +432,11 @@ public class FirestoreDataSource {
                 }
 
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .thenRun(() -> resultFuture.complete(new Result.Success<>(null)))
+                    .thenRun(() -> firestore.collection(FirebaseCollections.CHATS)
+                            .document(chatId)
+                            .update("lastMessageRead", true)
+                            .addOnSuccessListener(a -> resultFuture.complete(new Result.Success<>(null)))
+                            .addOnFailureListener(e -> resultFuture.complete(new Result.Error<>(e.getMessage()))))
                     .exceptionally(e -> {
                         resultFuture.complete(new Result.Error<>(e.getMessage()));
                         return null;

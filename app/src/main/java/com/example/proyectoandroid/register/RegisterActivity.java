@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -14,6 +15,7 @@ import com.example.proyectoandroid.login.LoginActivity;
 import com.example.proyectoandroid.di.ServiceLocator;
 import com.example.proyectoandroid.domain.usecase.LoginUserUseCase;
 import com.example.proyectoandroid.utils.Result;
+import com.google.android.material.appbar.MaterialToolbar;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -28,9 +30,16 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Registrarse");
+        }
+
         etEmail = findViewById(R.id.etRegisterEmail);
         etPassword = findViewById(R.id.etRegisterPassword);
-        etDisplayName = findViewById(R.id.etRegisterDisplayName); // Agrega este campo al XML
+        etDisplayName = findViewById(R.id.etRegisterDisplayName);
         btnRegister = findViewById(R.id.btnRegister);
         btnGoLogin = findViewById(R.id.btnGoLogin);
         progressBar = findViewById(R.id.progressBar);
@@ -61,6 +70,21 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        getOnBackPressedDispatcher().onBackPressed();
+        return true;
+    }
+
     private void checkEmailExistsAndRegister(String email, String password, String displayName) {
         setLoadingState(true);
 
@@ -69,17 +93,14 @@ public class RegisterActivity extends AppCompatActivity {
                     setLoadingState(false);
 
                     if (result.isSuccess()) {
-                        // El usuario ya existe con ese email
                         Toast.makeText(this, "Este correo ya está registrado. Usa otro o inicia sesión.", Toast.LENGTH_LONG).show();
                     } else {
-                        // El correo no existe, proceder con el registro
                         performRegister(email, password, displayName);
                     }
                 }))
                 .exceptionally(throwable -> {
                     runOnUiThread(() -> {
                         setLoadingState(false);
-                        // Si el error es "usuario no existe", se puede registrar; si es otro, mostrar mensaje
                         performRegister(email, password, displayName);
                     });
                     return null;
@@ -101,7 +122,6 @@ public class RegisterActivity extends AppCompatActivity {
                             Log.d(TAG, "Registro exitoso");
                             Toast.makeText(this, "¡Registro exitoso, Bienvenido!", Toast.LENGTH_SHORT).show();
 
-                            // Pequeño delay para mejor UX
                             new Handler().postDelayed(() -> {
                                 Intent intent = new Intent(this, LoginActivity.class);
                                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

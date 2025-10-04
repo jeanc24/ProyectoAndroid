@@ -58,9 +58,25 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         }
 
         holder.chatTitle.setText(displayName);
-        holder.chatLastMessage.setText(chat.getLastMessageContent());
+
+        String lastMsg = chat.getLastMessageContent();
+        if (lastMsg == null) lastMsg = "";
+        holder.chatLastMessage.setText(lastMsg);
 
         holder.chatTimestamp.setText(formatTimestamp(chat.getLastMessageTimestamp()));
+
+        // Mostrar remitente ("Tú:" si es el actual)
+        if (chat.getLastMessageSenderId() != null && chat.getLastMessageSenderId().equals(currentUserId)) {
+            holder.chatLastSender.setText("Tú:");
+        } else {
+            String sender = chat.getLastMessageSenderName();
+            if (sender == null || sender.isEmpty()) sender = chat.getLastMessageSenderEmail();
+            holder.chatLastSender.setText(sender != null ? sender + ":" : "");
+        }
+
+        // Mostrar puntito de no leído si el último mensaje es de otro usuario y no está leído
+        boolean showUnreadDot = !chat.isLastMessageRead() && chat.getLastMessageSenderId() != null && !chat.getLastMessageSenderId().equals(currentUserId);
+        holder.unreadDot.setVisibility(showUnreadDot ? View.VISIBLE : View.GONE);
 
         holder.itemView.setOnClickListener(view -> {
             if (listener != null) listener.onChatClick(chat);
@@ -90,13 +106,16 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
     public static class ChatViewHolder extends RecyclerView.ViewHolder {
         ImageView chatAvatar;
-        TextView chatTitle, chatLastMessage, chatTimestamp;
+        TextView chatTitle, chatLastMessage, chatTimestamp, chatLastSender;
+        View unreadDot;
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
             chatAvatar = itemView.findViewById(R.id.chatAvatar);
             chatTitle = itemView.findViewById(R.id.chatTitle);
             chatLastMessage = itemView.findViewById(R.id.chatLastMessage);
             chatTimestamp = itemView.findViewById(R.id.chatTimestamp);
+            chatLastSender = itemView.findViewById(R.id.chatLastSender);
+            unreadDot = itemView.findViewById(R.id.unreadDot);
         }
     }
 

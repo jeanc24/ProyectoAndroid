@@ -62,4 +62,12 @@
                     android:gravity="end"/>
         </LinearLayout>
     </LinearLayout>
+
+    <View
+            android:id="@+id/unreadDot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/unread_dot"
+            android:visibility="gone"/>
 </LinearLayout>

@@ -14,7 +14,9 @@ import com.squareup.picasso.Picasso;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -69,6 +71,21 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         Message msg = messages.get(position);
 
+        // Manejo del encabezado de fecha por día
+        TextView tvDateHeader = holder.itemView.findViewById(R.id.tvDateHeader);
+        if (tvDateHeader != null) {
+            Date currentDate = msg.getTimestamp();
+            Date prevDate = position > 0 ? messages.get(position - 1).getTimestamp() : null;
+
+            if (shouldShowDateHeader(currentDate, prevDate)) {
+                tvDateHeader.setVisibility(View.VISIBLE);
+                tvDateHeader.setText(formatDayHeader(currentDate));
+            } else {
+                tvDateHeader.setVisibility(View.GONE);
+                tvDateHeader.setText("");
+            }
+        }
+
         if (holder instanceof TextMessageViewHolder) {
             TextMessageViewHolder h = (TextMessageViewHolder) holder;
             h.tvText.setText(msg.getContent());
@@ -98,6 +115,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             h.tvTimestamp.setText(formatTimestamp(msg.getTimestamp()));
             if (!TextUtils.isEmpty(msg.getImageUrl())) {
                 Picasso.get().load(msg.getImageUrl()).into(h.ivImageMessage);
+            } else {
+                h.ivImageMessage.setImageDrawable(null);
             }
         }
     }
@@ -110,7 +129,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     // Métodos para actualizar la lista con prevención de duplicados
     public void setMessages(List<Message> msgs) {
         messages.clear();
-        // Ordenar mensajes por timestamp (más antiguos primero)
+        // Ordenar mensajes por timestamp (más antiguos primero) si vienen al revés
         List<Message> sortedMessages = new ArrayList<>(msgs);
         Collections.reverse(sortedMessages);
         messages.addAll(sortedMessages);
@@ -162,5 +181,58 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         if (date == null) return "";
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
         return sdf.format(date);
+    }
+
+    private boolean shouldShowDateHeader(Date current, Date previous) {
+        if (current == null) return false; // Si aún no hay timestamp del servidor, no mostrar
+        if (previous == null) return true;  // Primer mensaje siempre muestra fecha
+        return !isSameDay(current, previous);
+    }
+
+    private boolean isSameDay(Date d1, Date d2) {
+        if (d1 == null || d2 == null) return false;
+        Calendar c1 = Calendar.getInstance();
+        c1.setTime(d1);
+        Calendar c2 = Calendar.getInstance();
+        c2.setTime(d2);
+        return c1.get(Calendar.ERA) == c2.get(Calendar.ERA)
+                && c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR)
+                && c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR);
+    }
+
+    private String formatDayHeader(Date date) {
+        if (date == null) return "";
+        Calendar today = Calendar.getInstance();
+        Calendar target = Calendar.getInstance();
+        target.setTime(date);
+
+        // Normalizar horas para comparación
+        zeroTime(today);
+        zeroTime(target);
+
+        Calendar yesterday = (Calendar) today.clone();
+        yesterday.add(Calendar.DAY_OF_YEAR, -1);
+
+        if (isSameDay(target.getTime(), today.getTime())) {
+            return "Hoy";
+        } else if (isSameDay(target.getTime(), yesterday.getTime())) {
+            return "Ayer";
+        } else {
+            // Ej: lun, 7 oct 2025
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE, d MMM yyyy", Locale.getDefault());
+            return capitalizeFirst(sdf.format(date));
+        }
+    }
+
+    private void zeroTime(Calendar cal) {
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+    }
+
+    private String capitalizeFirst(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return s.substring(0, 1).toUpperCase(Locale.getDefault()) + s.substring(1);
     }
 }
