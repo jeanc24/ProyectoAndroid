@@ -35,3 +35,6 @@
 # Suprimir warnings ruidosos que no afectan en runtime
 -dontwarn com.google.firebase.**
 -dontwarn com.google.android.gms.**
+
+# Keep Firebase Messaging service implementation to ensure it's not removed/obfuscated
+-keep class com.example.proyectoandroid.notifications.ChatMessagingService extends com.google.firebase.messaging.FirebaseMessagingService { *; }

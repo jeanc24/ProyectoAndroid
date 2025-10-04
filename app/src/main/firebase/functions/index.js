@@ -39,61 +39,102 @@ exports.sendMessageNotification = functions.firestore
         return null;
       }
 
-      const sendNotificationPromises = recipientIds.map(async (userId) => {
-        try {
-          const userSnapshot = await admin.firestore()
-            .collection('users')
-            .doc(userId)
-            .get();
+      // Obtener tokens FCM válidos de los destinatarios (soportar >10 con 'in' por lotes)
+      const chunk = (arr, size) => arr.reduce((acc, _, i) => (i % size ? acc : [...acc, arr.slice(i, i + size)]), []);
+      const recipientChunks = chunk(recipientIds, 10);
 
-          if (!userSnapshot.exists) {
-            console.log(`Usuario ${userId} no encontrado`);
-            return null;
+      const tokens = [];
+      const tokenToUserId = {};
+
+      for (const ids of recipientChunks) {
+        const usersSnap = await admin.firestore()
+          .collection('users')
+          .where(admin.firestore.FieldPath.documentId(), 'in', ids)
+          .get();
+
+        usersSnap.forEach(doc => {
+          const data = doc.data() || {};
+          const token = data.fcmToken;
+          if (token && typeof token === 'string' && token.trim() !== '') {
+            tokens.push(token);
+            tokenToUserId[token] = doc.id;
           }
+        });
+      }
 
-          const userData = userSnapshot.data();
-          const fcmToken = userData.fcmToken;
+      if (tokens.length === 0) {
+        console.log('Destinatarios sin token FCM; no se enviará notificación');
+        return null;
+      }
 
-          if (!fcmToken || fcmToken === '') {
-            console.log(`Usuario ${userId} no tiene token FCM`);
-            return null;
-          }
+      const senderName = messageData.senderName || 'Alguien';
+      const isImage = messageData.messageType === 1; // 1 == imagen según tu modelo
+      const notificationTitle = `Mensaje de ${senderName}`;
+      const notificationBody = isImage
+        ? '📷 Imagen'
+        : (messageData.content || '').toString().slice(0, 100);
 
-          const senderName = messageData.senderName || 'Alguien';
-          let notificationTitle = `Mensaje de ${senderName}`;
-          let notificationBody = '';
-
-          if (messageData.messageType === 1) {
-            notificationBody = '📷 Imagen';
-          } else {
-            notificationBody = messageData.content.length > 100
-              ? messageData.content.substring(0, 97) + '...'
-              : messageData.content;
-          }
-
-          const payload = {
-            notification: {
-              title: notificationTitle,
-              body: notificationBody,
-              icon: 'default',
+      // Mensaje FCM v1 con configuración Android para canal y prioridad
+      const baseMessage = {
+        notification: {
+          title: notificationTitle,
+          body: notificationBody,
+        },
+        data: {
+          chatId: chatId,
+          messageId: context.params.messageId,
+          senderId: messageData.senderId,
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'chat_messages',
+            clickAction: 'OPEN_CHAT_ACTIVITY',
+            sound: 'default',
+          },
+        },
+        // Opcional para iOS si en el futuro usan iPhone
+        apns: {
+          payload: {
+            aps: {
               sound: 'default',
-              clickAction: 'OPEN_CHAT_ACTIVITY'
+              category: 'OPEN_CHAT_ACTIVITY',
             },
-            data: {
-              chatId: chatId,
-              messageId: context.params.messageId,
-              senderId: messageData.senderId
-            }
-          };
+          },
+        },
+      };
 
-          return admin.messaging().sendToDevice(fcmToken, payload);
-        } catch (err) {
-          console.error(`Error enviando notificación a ${userId}:`, err);
-          return null;
+      // Enviar a múltiples tokens con v1
+      const multicast = {
+        tokens,
+        ...baseMessage,
+      };
+
+      const response = await admin.messaging().sendEachForMulticast(multicast);
+
+      // Limpiar tokens inválidos y registrar errores
+      const cleanupPromises = [];
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          const token = tokens[idx];
+          const err = resp.error;
+          console.error(`Error enviando a token ${token}:`, err);
+
+          if (err && err.code === 'messaging/registration-token-not-registered') {
+            const userId = tokenToUserId[token];
+            if (userId) {
+              cleanupPromises.push(
+                admin.firestore().collection('users').doc(userId).update({ fcmToken: '' })
+                  .then(() => console.log(`Token inválido eliminado para usuario ${userId}`))
+                  .catch(e => console.error('Error limpiando token inválido', e))
+              );
+            }
+          }
         }
       });
 
-      await Promise.all(sendNotificationPromises);
+      await Promise.all(cleanupPromises);
+      console.log(`Notificaciones intentadas: ${tokens.length}, éxito: ${response.successCount}, fallo: ${response.failureCount}`);
       return null;
 
     } catch (error) {
