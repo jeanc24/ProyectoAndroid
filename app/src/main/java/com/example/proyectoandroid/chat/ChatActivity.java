@@ -2,8 +2,11 @@ package com.example.proyectoandroid.chat;
 
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.recyclerview.widget.RecyclerView;
@@ -13,13 +16,20 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.proyectoandroid.R;
 import com.example.proyectoandroid.data.model.Message;
 import com.example.proyectoandroid.data.model.User;
+import com.example.proyectoandroid.data.remote.FirestoreDataSource;
 import com.example.proyectoandroid.di.ServiceLocator;
 import com.example.proyectoandroid.domain.usecase.ListenMessagesUseCase;
 import com.example.proyectoandroid.utils.Result;
+import com.example.proyectoandroid.utils.CryptoUtils;
+import com.squareup.picasso.Picasso;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.firestore.ListenerRegistration;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -34,12 +44,21 @@ public class ChatActivity extends AppCompatActivity {
     private String chatId;
     private String chatTitle;
     private String currentUserId;
+    private String otherUserId;
+    private User otherUser;
 
     private ListenMessagesUseCase listenMessagesUseCase;
     private ListenerRegistration messagesListener;
+    private FirestoreDataSource firestoreDataSource;
 
     // Image picker launcher
     private ActivityResultLauncher<String> pickImageLauncher;
+
+    // UI for header/status
+    private ImageView imgAvatar;
+    private TextView tvChatTitle;
+    private TextView tvOnlineStatus;
+    private View onlineIndicator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +76,12 @@ public class ChatActivity extends AppCompatActivity {
         btnSend = findViewById(R.id.btnSend);
         btnAttachImage = findViewById(R.id.btnAttachImage);
 
+        // Header/status UI (assuming you have these views in your layout)
+        imgAvatar = findViewById(R.id.imgAvatar);
+        tvChatTitle = findViewById(R.id.tvChatTitle);
+        tvOnlineStatus = findViewById(R.id.tvOnlineStatus);
+        onlineIndicator = findViewById(R.id.onlineIndicator);
+
         chatId = getIntent().getStringExtra("chatId");
         chatTitle = getIntent().getStringExtra("chatTitle");
         if (getSupportActionBar() != null) {
@@ -71,17 +96,44 @@ public class ChatActivity extends AppCompatActivity {
         rvMessages.setLayoutManager(new LinearLayoutManager(this));
         rvMessages.setAdapter(messageAdapter);
 
+        firestoreDataSource = new FirestoreDataSource();
+
+        // Obtener el otro usuario (suponiendo que en chat privado hay dos participantes)
+        firestoreDataSource.getChatById(chatId)
+                .thenAccept(result -> {
+                    if (result instanceof Result.Success) {
+                        List<String> participants = ((Result.Success<com.example.proyectoandroid.data.model.Chat>) result).getData().getParticipantIds();
+                        for (String uid : participants) {
+                            if (!uid.equals(currentUserId)) {
+                                otherUserId = uid;
+                                break;
+                            }
+                        }
+                        // Escuchar el estado en línea del otro usuario
+                        firestoreDataSource.addUserStatusListener(otherUserId, user -> runOnUiThread(() -> {
+                            otherUser = user;
+                            setupChatHeader(otherUser);
+                        }));
+                    }
+                });
+
         listenMessagesUseCase = ServiceLocator.getInstance(getApplicationContext()).provideListenMessagesUseCase();
 
         messagesListener = listenMessagesUseCase.listenForMessages(
                 chatId,
                 50,
                 initialMessages -> runOnUiThread(() -> {
-                    messageAdapter.setMessages(initialMessages);
+                    // DESCIFRAR todos los mensajes antes de mostrar
+                    List<Message> decryptedMessages = new ArrayList<>();
+                    for (Message msg : initialMessages) {
+                        decryptedMessages.add(decryptMessage(msg));
+                    }
+                    messageAdapter.setMessages(decryptedMessages);
                     rvMessages.scrollToPosition(messageAdapter.getItemCount() - 1);
                 }),
                 newMessage -> runOnUiThread(() -> {
-                    messageAdapter.addMessage(newMessage);
+                    // DESCIFRAR el mensaje antes de agregar
+                    messageAdapter.addMessage(decryptMessage(newMessage));
                     rvMessages.scrollToPosition(messageAdapter.getItemCount() - 1);
                 }),
                 updatedMessage -> runOnUiThread(() -> {
@@ -95,7 +147,15 @@ public class ChatActivity extends AppCompatActivity {
                 Toast.makeText(this, "Escribe un mensaje", Toast.LENGTH_SHORT).show();
                 return;
             }
-            listenMessagesUseCase.sendTextMessage(chatId, content)
+            // CIFRAR antes de enviar
+            String encryptedContent;
+            try {
+                encryptedContent = CryptoUtils.encrypt(content);
+            } catch (Exception e) {
+                Toast.makeText(this, "Error cifrando mensaje", Toast.LENGTH_LONG).show();
+                return;
+            }
+            listenMessagesUseCase.sendTextMessage(chatId, encryptedContent)
                     .thenAccept(result -> runOnUiThread(() -> {
                         if (result.isSuccess()) {
                             etMessage.setText("");
@@ -140,6 +200,56 @@ public class ChatActivity extends AppCompatActivity {
         etMessage.setEnabled(enabled);
     }
 
+    /**
+     * Actualiza el header del chat con el avatar y el estado en línea del otro usuario
+     */
+    private void setupChatHeader(User user) {
+        if (tvChatTitle != null) {
+            tvChatTitle.setText(user.getDisplayName());
+        }
+        if (imgAvatar != null) {
+            if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
+                Picasso.get().load(user.getPhotoUrl()).placeholder(R.drawable.ic_profile_placeholder).into(imgAvatar);
+            } else {
+                imgAvatar.setImageResource(R.drawable.ic_profile_placeholder);
+            }
+        }
+        if (user.isOnline()) {
+            if (onlineIndicator != null) onlineIndicator.setVisibility(android.view.View.VISIBLE);
+            if (tvOnlineStatus != null) {
+                tvOnlineStatus.setVisibility(android.view.View.VISIBLE);
+                tvOnlineStatus.setText("En línea");
+                tvOnlineStatus.setTextColor(0xFF4CAF50); // Verde
+            }
+        } else {
+            if (onlineIndicator != null) onlineIndicator.setVisibility(android.view.View.GONE);
+            if (tvOnlineStatus != null) {
+                tvOnlineStatus.setVisibility(android.view.View.VISIBLE);
+                tvOnlineStatus.setText("Últ. vez: " + formatLastOnline(user.getLastOnline()));
+                tvOnlineStatus.setTextColor(0xFF888888); // Gris
+            }
+        }
+    }
+
+    private String formatLastOnline(long lastOnlineMillis) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
+        return sdf.format(new Date(lastOnlineMillis));
+    }
+
+    // DESCIFRAR el contenido del mensaje
+    private Message decryptMessage(Message msg) {
+        if (msg.getMessageType() == 0 && msg.getContent() != null && !msg.getContent().isEmpty()) { // texto
+            try {
+                String decrypted = CryptoUtils.decrypt(msg.getContent());
+                msg.setContent(decrypted);
+            } catch (Exception e) {
+                msg.setContent("[Error al descifrar]");
+            }
+        }
+        // imágenes u otros tipos pueden manejarse diferente si lo requieres
+        return msg;
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
@@ -163,6 +273,9 @@ public class ChatActivity extends AppCompatActivity {
         }
         if (messagesListener != null) {
             messagesListener.remove();
+        }
+        if (firestoreDataSource != null && otherUserId != null) {
+            firestoreDataSource.removeUserStatusListener(otherUserId);
         }
     }
 }

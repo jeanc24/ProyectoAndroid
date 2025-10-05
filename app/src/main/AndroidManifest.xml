@@ -65,6 +65,10 @@
                 android:name=".CrearChatActivity"
                 android:exported="true"
                 android:theme="@style/Theme.ProyectoAndroid"/>
+        <activity
+                android:name=".EditProfileActivity"
+                android:exported="true"
+                android:theme="@style/Theme.ProyectoAndroid"/>
 
         <!-- Servicio de Firebase Cloud Messaging -->
         <service

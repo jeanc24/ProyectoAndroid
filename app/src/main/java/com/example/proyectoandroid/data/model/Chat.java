@@ -13,18 +13,20 @@ public class Chat {
     private List<String> participantIds;
     private String lastMessageContent;
     private String lastMessageSenderId;
-    private String lastMessageSenderName; // Nuevo campo
-    private String lastMessageSenderEmail; // Nuevo campo
+    private String lastMessageSenderName;
+    private String lastMessageSenderEmail;
     @ServerTimestamp
     private Date lastMessageTimestamp;
     private boolean isGroupChat;
     private String chatName;
     private String chatImageUrl;
     private boolean lastMessageRead;
+    private int lastMessageType; // <-- NUEVO CAMPO
 
     public Chat() {
         participantIds = new ArrayList<>();
         lastMessageRead = true;
+        lastMessageType = 0;
     }
 
     public Chat(String user1Id, String user2Id) {
@@ -36,6 +38,7 @@ public class Chat {
         this.lastMessageSenderName = "";
         this.lastMessageSenderEmail = "";
         this.lastMessageRead = true;
+        this.lastMessageType = 0;
     }
 
     public Chat(List<String> participantIds, String chatName) {
@@ -47,9 +50,10 @@ public class Chat {
         this.lastMessageSenderName = "";
         this.lastMessageSenderEmail = "";
         this.lastMessageRead = true;
+        this.lastMessageType = 0;
     }
 
-    // Getters y setters existentes...
+    // Getters y setters
     public String getChatId() { return chatId; }
     public void setChatId(String chatId) { this.chatId = chatId; }
 
@@ -74,7 +78,6 @@ public class Chat {
     public String getChatImageUrl() { return chatImageUrl; }
     public void setChatImageUrl(String chatImageUrl) { this.chatImageUrl = chatImageUrl; }
 
-    // Nuevos getters y setters
     public String getLastMessageSenderName() { return lastMessageSenderName; }
     public void setLastMessageSenderName(String lastMessageSenderName) { this.lastMessageSenderName = lastMessageSenderName; }
 
@@ -83,4 +86,7 @@ public class Chat {
 
     public boolean isLastMessageRead() { return lastMessageRead; }
     public void setLastMessageRead(boolean lastMessageRead) { this.lastMessageRead = lastMessageRead; }
+
+    public int getLastMessageType() { return lastMessageType; }
+    public void setLastMessageType(int lastMessageType) { this.lastMessageType = lastMessageType; }
 }

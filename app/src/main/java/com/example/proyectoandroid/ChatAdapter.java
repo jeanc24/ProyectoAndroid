@@ -1,5 +1,6 @@
 package com.example.proyectoandroid;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyectoandroid.data.model.Chat;
 import com.example.proyectoandroid.data.model.User;
+import com.example.proyectoandroid.utils.CryptoUtils;
+import com.squareup.picasso.Picasso;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -19,6 +22,7 @@ import java.util.Map;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder> {
 
+    private static final String TAG = "ChatAdapter";
     private List<Chat> chatList;
     private Map<String, User> userMap;
     private String currentUserId;
@@ -43,6 +47,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         Chat chat = chatList.get(position);
 
         String displayName;
+        String photoUrl = null;
 
         if (!chat.isGroupChat() && chat.getParticipantIds().size() == 2 && currentUserId != null) {
             String otherUserId = chat.getParticipantIds().get(0).equals(currentUserId)
@@ -53,16 +58,51 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             displayName = (otherUser != null && otherUser.getDisplayName() != null && !otherUser.getDisplayName().isEmpty())
                     ? otherUser.getDisplayName()
                     : otherUserId;
+
+            if (otherUser != null) {
+                // Priorizar photoUrl, si está vacío usar profileImageUrl como fallback
+                photoUrl = otherUser.getPhotoUrl();
+                if ((photoUrl == null || photoUrl.isEmpty()) && otherUser.getProfileImageUrl() != null) {
+                    photoUrl = otherUser.getProfileImageUrl();
+                }
+            }
         } else {
             displayName = chat.getChatName();
+            photoUrl = null;
         }
 
         holder.chatTitle.setText(displayName);
 
-        String lastMsg = chat.getLastMessageContent();
-        if (lastMsg == null) lastMsg = "";
-        holder.chatLastMessage.setText(lastMsg.trim().isEmpty() ? "[Imagen]" : lastMsg);
+        // Cargar foto de perfil
+        if (photoUrl != null && !photoUrl.isEmpty()) {
+            Picasso.get().load(photoUrl).placeholder(R.drawable.ic_profile_placeholder).into(holder.chatAvatar);
+        } else {
+            holder.chatAvatar.setImageResource(R.drawable.ic_profile_placeholder);
+        }
 
+        // Procesar mensaje según el tipo
+        String lastMsg = chat.getLastMessageContent();
+        String previewMsg = "[Sin mensaje]";
+        int msgType = chat.getLastMessageType(); // 0 = texto, 1 = imagen
+
+        // Log para debugging
+        Log.d(TAG, "Chat: " + chat.getChatId() + ", Tipo: " + msgType + ", Contenido: " + (lastMsg != null ? lastMsg : "null"));
+
+        if (msgType == 0 && lastMsg != null && !lastMsg.isEmpty()) { // TEXTO
+            // CAMBIO CLAVE: Intentar descifrar SIEMPRE para mensajes de texto
+            try {
+                previewMsg = CryptoUtils.decrypt(lastMsg);
+                Log.d(TAG, "✅ Descifrado exitoso: " + previewMsg.substring(0, Math.min(previewMsg.length(), 20)) + "...");
+            } catch (Exception e) {
+                // Si falla el descifrado, mostrar error claro
+                Log.e(TAG, "❌ Error descifrado: " + e.getMessage());
+                previewMsg = lastMsg; // Fallback al mensaje original si falla
+            }
+        } else if (msgType == 1) { // IMAGEN
+            previewMsg = "[Imagen]";
+        }
+
+        holder.chatLastMessage.setText(previewMsg);
         holder.chatTimestamp.setText(formatTimestamp(chat.getLastMessageTimestamp()));
 
         // Mostrar remitente ("Tú:" si es el actual)
@@ -74,7 +114,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             holder.chatLastSender.setText(sender != null ? sender + ":" : "");
         }
 
-        // Mostrar puntito de no leído si el último mensaje es de otro usuario y no está leído
+        // Mostrar punto de no leído
         boolean showUnreadDot = !chat.isLastMessageRead() && chat.getLastMessageSenderId() != null && !chat.getLastMessageSenderId().equals(currentUserId);
         holder.unreadDot.setVisibility(showUnreadDot ? View.VISIBLE : View.GONE);
 
@@ -108,6 +148,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         ImageView chatAvatar;
         TextView chatTitle, chatLastMessage, chatTimestamp, chatLastSender;
         View unreadDot;
+
         public ChatViewHolder(@NonNull View itemView) {
             super(itemView);
             chatAvatar = itemView.findViewById(R.id.chatAvatar);

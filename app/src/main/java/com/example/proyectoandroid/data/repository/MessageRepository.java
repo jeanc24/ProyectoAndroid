@@ -12,9 +12,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public interface MessageRepository {
-    
+
     CompletableFuture<Result<Message>> sendTextMessage(String chatId, String content);
-    
+
     CompletableFuture<Result<Message>> sendImageMessage(String chatId, String imageUrl);
 
     CompletableFuture<Result<Message>> uploadAndSendImageMessage(Context context, String chatId, Uri imageUri);

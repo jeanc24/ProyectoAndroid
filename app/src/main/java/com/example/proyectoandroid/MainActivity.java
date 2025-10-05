@@ -59,6 +59,11 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, com.example.proyectoandroid.CrearChatActivity.class);
             startActivity(intent);
         });
+        FloatingActionButton fabProfile = findViewById(R.id.fabProfile);
+        fabProfile.setOnClickListener(v -> {
+            Intent intent = new Intent(this, EditProfileActivity.class);
+            startActivity(intent);
+        });
 
         rvChats = findViewById(R.id.rvChats);
         rvChats.setLayoutManager(new LinearLayoutManager(this));

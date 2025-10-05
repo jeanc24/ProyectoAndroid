@@ -5,6 +5,7 @@ import android.net.Uri;
 
 import com.example.proyectoandroid.data.model.Message;
 import com.example.proyectoandroid.data.repository.MessageRepository;
+import com.example.proyectoandroid.utils.CryptoUtils;
 import com.example.proyectoandroid.utils.Result;
 import com.google.firebase.firestore.ListenerRegistration;
 
@@ -91,8 +92,16 @@ public class ListenMessagesUseCase {
         return messageRepository.getChatMessagesPaginated(chatId, lastMessageTimestamp, pageSize);
     }
 
+
     public CompletableFuture<Result<Message>> sendTextMessage(String chatId, String content) {
-        return messageRepository.sendTextMessage(chatId, content);
+        try {
+            String encryptedContent = CryptoUtils.encrypt(content);
+            return messageRepository.sendTextMessage(chatId, encryptedContent);
+        } catch (Exception e) {
+            CompletableFuture<Result<Message>> future = new CompletableFuture<>();
+            future.complete(new Result.Error<>(e.getMessage()));
+            return future;
+        }
     }
 
     public CompletableFuture<Result<Message>> sendImageMessage(String chatId, String imageUrl) {

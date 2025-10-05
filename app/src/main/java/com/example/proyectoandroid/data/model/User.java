@@ -5,15 +5,20 @@ import com.google.firebase.firestore.DocumentId;
 public class User {
 
     @DocumentId
-    private String documentId; // Normalmente igual al uid, pero NO es necesario si usas uid como id.
+    private String documentId;
 
     private String uid;
     private String email;
     private String displayName;
-    private String profileImageUrl;
+    private String photoUrl; // Campo principal que usa la app
+    private String profileImageUrl; // Campo legacy de compatibilidad
     private boolean online;
     private long lastOnline;
     private String fcmToken;
+
+    // Campos adicionales que Firestore está esperando
+    private long lastSeen;
+    private long tokenUpdatedAt;
 
     public User() {
         // Constructor vacío requerido por Firebase
@@ -23,10 +28,13 @@ public class User {
         this.uid = uid;
         this.email = email;
         this.displayName = displayName;
+        this.photoUrl = "";
         this.profileImageUrl = "";
         this.online = false;
         this.lastOnline = System.currentTimeMillis();
         this.fcmToken = "";
+        this.lastSeen = 0;
+        this.tokenUpdatedAt = 0;
     }
 
     // Getters y setters
@@ -42,8 +50,21 @@ public class User {
     public String getDisplayName() { return displayName; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }
 
+    public String getPhotoUrl() { return photoUrl; }
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
+        // Mantener sincronizado el campo legacy por compatibilidad
+        this.profileImageUrl = photoUrl;
+    }
+
     public String getProfileImageUrl() { return profileImageUrl; }
-    public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+        // Si photoUrl está vacío, usar este valor
+        if (this.photoUrl == null || this.photoUrl.isEmpty()) {
+            this.photoUrl = profileImageUrl;
+        }
+    }
 
     public boolean isOnline() { return online; }
     public void setOnline(boolean online) { this.online = online; }
@@ -53,4 +74,10 @@ public class User {
 
     public String getFcmToken() { return fcmToken; }
     public void setFcmToken(String fcmToken) { this.fcmToken = fcmToken; }
+
+    public long getLastSeen() { return lastSeen; }
+    public void setLastSeen(long lastSeen) { this.lastSeen = lastSeen; }
+
+    public long getTokenUpdatedAt() { return tokenUpdatedAt; }
+    public void setTokenUpdatedAt(long tokenUpdatedAt) { this.tokenUpdatedAt = tokenUpdatedAt; }
 }

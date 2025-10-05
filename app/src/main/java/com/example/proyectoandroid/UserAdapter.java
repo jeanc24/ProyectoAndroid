@@ -74,8 +74,8 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder
         holder.tvUserName.setText(user.getDisplayName());
         holder.tvUserEmail.setText(user.getEmail());
         // Si tienes imagen de perfil, la cargas así:
-        if (user.getProfileImageUrl() != null && !user.getProfileImageUrl().isEmpty()) {
-            Picasso.get().load(user.getProfileImageUrl()).into(holder.ivAvatar);
+        if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
+            Picasso.get().load(user.getPhotoUrl()).into(holder.ivAvatar);
         } else {
             holder.ivAvatar.setImageResource(R.drawable.ic_launcher_foreground);
         }

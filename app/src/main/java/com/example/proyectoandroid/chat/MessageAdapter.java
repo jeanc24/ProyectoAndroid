@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.proyectoandroid.R;
 import com.example.proyectoandroid.data.model.Message;
+import com.example.proyectoandroid.utils.CryptoUtils;
 import com.squareup.picasso.Picasso;
 
 import java.text.SimpleDateFormat;
@@ -88,7 +89,16 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
         if (holder instanceof TextMessageViewHolder) {
             TextMessageViewHolder h = (TextMessageViewHolder) holder;
-            h.tvText.setText(msg.getContent());
+            // DESCIFRA EL TEXTO ANTES DE MOSTRAR
+            String decryptedText = msg.getContent();
+            if (decryptedText != null && !decryptedText.isEmpty()) {
+                try {
+                    decryptedText = CryptoUtils.decrypt(decryptedText);
+                } catch (Exception e) {
+                    decryptedText = "[Error al descifrar]";
+                }
+            }
+            h.tvText.setText(decryptedText);
 
             // Mostrar nombre o email del remitente
             String senderDisplay = "";
