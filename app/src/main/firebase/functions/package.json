@@ -1,0 +1,20 @@
+{
+  "name": "chat-functions",
+  "description": "Firebase Cloud Functions for chat notifications",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "scripts": {
+    "start": "firebase emulators:start --only functions,firestore",
+    "deploy": "firebase deploy --only functions",
+    "lint": "echo 'no lint configured'"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.5.0",
+    "firebase-functions": "^5.0.0"
+  }
+}
+

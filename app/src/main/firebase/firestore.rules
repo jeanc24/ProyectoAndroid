@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Función para verificar si el usuario está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Función para verificar si el usuario está accediendo a sus propios datos
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Función para verificar si el usuario es miembro de un chat
+    function isChatMember(chatId) {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/chats/$(chatId)/participants/$(request.auth.uid));
+    }
+
+    // Reglas para la colección de usuarios
+    match /users/{userId} {
+      // Cualquiera puede leer los datos básicos de usuario
+      allow read: if isAuthenticated();
+
+      // Solo el propio usuario puede escribir sus datos
+      allow write: if isUser(userId);
+
+      // El token FCM solo puede ser actualizado por el propio usuario
+      allow update: if isUser(userId) &&
+                      (request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['fcmToken', 'online', 'lastOnline', 'profileImageUrl']));
+    }
+
+    // Reglas para la colección de chats
+    match /chats/{chatId} {
+      // Solo los miembros del chat pueden leer y escribir
+      allow read, write: if isChatMember(chatId);
+
+      // Reglas para la subcolección de participantes
+      match /participants/{participantId} {
+        allow read: if isAuthenticated();
+        allow write: if isUser(participantId) || isChatMember(chatId);
+      }
+
+      // Reglas para la subcolección de mensajes
+      match /messages/{messageId} {
+        // Solo los miembros del chat pueden leer y enviar mensajes
+        allow read, create: if isChatMember(chatId);
+
+        // Solo el autor del mensaje o un administrador puede actualizarlo o eliminarlo
+        allow update, delete: if isUser(resource.data.senderId);
+      }
+    }
+
+    // Denegamos el acceso por defecto a todo lo demás
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

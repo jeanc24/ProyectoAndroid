@@ -11,14 +11,12 @@
     <com.google.android.material.appbar.AppBarLayout
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            android:fitsSystemWindows="true"
-    >
+            android:fitsSystemWindows="true">
 
         <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"/>
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <include layout="@layout/content_main"/>
@@ -30,6 +28,16 @@
             android:layout_gravity="bottom|end"
             android:layout_marginEnd="@dimen/fab_margin"
             android:layout_marginBottom="16dp"
-            app:srcCompat="@android:drawable/ic_dialog_email"/>
+            app:srcCompat="@android:drawable/ic_dialog_email"
+            android:contentDescription="Nuevo chat"/>
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="16dp"
+            app:srcCompat="@android:drawable/ic_menu_edit"
+            android:contentDescription="Editar perfil"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

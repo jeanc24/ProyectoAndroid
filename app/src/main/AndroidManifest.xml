@@ -2,7 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
+            android:name=".ChatApplication"
             android:allowBackup="true"
             android:dataExtractionRules="@xml/data_extraction_rules"
             android:fullBackupContent="@xml/backup_rules"
@@ -12,16 +18,76 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.ProyectoAndroid"
             tools:targetApi="31">
+
+        <!-- MainActivity como launcher -->
         <activity
                 android:name=".MainActivity"
                 android:exported="true"
                 android:theme="@style/Theme.ProyectoAndroid">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-    </application>
 
+        <!-- Activity para pruebas de backend -->
+        <activity
+                android:name=".BackendTestActivity"
+                android:exported="true"
+                android:label="Backend Tests"
+                android:theme="@style/Theme.ProyectoAndroid"/>
+
+        <!-- Otras activities de tu app -->
+        <activity
+                android:name=".chat.ChatActivity"
+                android:exported="true"
+                android:theme="@style/Theme.ProyectoAndroid">
+            <intent-filter>
+                <action android:name="OPEN_CHAT_ACTIVITY" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+                android:name=".chat.ImageViewerActivity"
+                android:theme="@style/Theme.ProyectoAndroid"
+                android:exported="false"/>
+
+        <activity
+                android:name=".login.LoginActivity"
+                android:exported="true"
+                android:theme="@style/Theme.ProyectoAndroid"/>
+        <activity
+                android:name=".register.RegisterActivity"
+                android:exported="true"
+                android:theme="@style/Theme.ProyectoAndroid"/>
+        <activity
+                android:name=".CrearChatActivity"
+                android:exported="true"
+                android:theme="@style/Theme.ProyectoAndroid"/>
+        <activity
+                android:name=".EditProfileActivity"
+                android:exported="true"
+                android:theme="@style/Theme.ProyectoAndroid"/>
+
+        <!-- Servicio de Firebase Cloud Messaging -->
+        <service
+            android:name=".notifications.ChatMessagingService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="@string/default_notification_channel_id" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color" />
+
+    </application>
 </manifest>

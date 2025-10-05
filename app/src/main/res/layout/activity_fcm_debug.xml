@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Depuración FCM"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_token"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Token FCM no disponible"
+                android:textIsSelectable="true"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:id="@+id/tv_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Toca 'Verificar conexión' para comenzar"
+                android:layout_marginBottom="16dp"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_check_connection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Verificar conexión"/>
+
+        <Button
+            android:id="@+id/btn_get_token"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Obtener token FCM"/>
+
+        <Button
+            android:id="@+id/btn_test_local"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Probar notificación local"/>
+
+        <!-- Botón Volver que FCMDebugActivity espera -->
+        <Button
+            android:id="@+id/btn_back"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Volver"/>
+    </LinearLayout>
+</LinearLayout>

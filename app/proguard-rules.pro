@@ -19,3 +19,22 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# === Añadiduras para Firestore/Firebase y modelos Java ===
+
+# Conserva tipos genéricos (necesario para mapeos)
+-keepattributes Signature, RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+
+# Mantener modelos
+-keep class com.example.proyectoandroid.data.model.** { *; }
+
+# Mantener anotaciones/clases de Firestore (previene stripping de proxies/mapeos)
+-keep class com.google.firebase.firestore.** { *; }
+-keep class com.google.firebase.annotations.** { *; }
+
+# Suprimir warnings ruidosos que no afectan en runtime
+-dontwarn com.google.firebase.**
+-dontwarn com.google.android.gms.**
+
+# Keep Firebase Messaging service implementation to ensure it's not removed/obfuscated
+-keep class com.example.proyectoandroid.notifications.ChatMessagingService extends com.google.firebase.messaging.FirebaseMessagingService { *; }

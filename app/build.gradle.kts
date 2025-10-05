@@ -1,5 +1,6 @@
 plugins {
-    alias(libs.plugins.android.application)
+    id("com.android.application")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -7,8 +8,8 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.proyectoandroid"
-        minSdk = 30
+        applicationId = "com.example.proyectoandroid"  // <-- CORRECTO!
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -17,28 +18,64 @@ android {
     }
 
     buildTypes {
-        release {
+        debug {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        release {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    buildFeatures {
-        viewBinding = true
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
 dependencies {
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("com.squareup.picasso:picasso:2.8")
+    implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
 
-    implementation(libs.appcompat)
-    implementation(libs.material)
-    implementation(libs.constraintlayout)
-    implementation(libs.navigation.fragment)
-    implementation(libs.navigation.ui)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
+    // Firebase Cloud Messaging para notificaciones
+    implementation("com.google.firebase:firebase-messaging")
+
+    // Firebase Storage para imágenes
+    implementation("com.google.firebase:firebase-storage")
+
+    // Firebase App Check providers
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+    debugImplementation("com.google.firebase:firebase-appcheck-debug")
+
+    // Librería para compresión de imágenes
+    implementation("id.zelory:compressor:3.0.1")
+
+    // PhotoView para zoom en imágenes
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
+
+    // coordinatorlayout para activity_image_viewer.xml
+    implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
+
+    // OkHttp3 para networking y caché
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    implementation("androidx.navigation:navigation-fragment:2.7.7")
+    implementation("androidx.navigation:navigation-ui:2.7.7")
+
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    implementation("androidx.appcompat:appcompat:1.7.1")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation(libs.activity)
+
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }

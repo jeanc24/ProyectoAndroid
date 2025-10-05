@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+    <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"/>
+
+    <TextView
+            android:id="@+id/tvCreateChatTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Crear nuevo chat"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingBottom="12dp"/>
+
+    <EditText
+            android:id="@+id/etSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Buscar usuario"
+            android:inputType="text"
+            android:padding="10dp"
+            android:layout_marginBottom="8dp"/>
+
+    <CheckBox
+            android:id="@+id/cbGroupMode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Crear chat grupal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"/>
+
+    <EditText
+            android:id="@+id/etGroupName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nombre del grupo"
+            android:inputType="textPersonName"
+            android:padding="10dp"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone"/>
+
+    <Button
+            android:id="@+id/btnCreateGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Crear grupo"
+            android:enabled="false"
+            android:visibility="gone"
+            android:layout_marginBottom="8dp"/>
+
+    <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvUsers"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+</LinearLayout>

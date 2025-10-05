@@ -1,0 +1,10 @@
+{
+  "functions": [
+    {
+      "source": "app/src/main/firebase/functions",
+      "codebase": "default",
+      "runtime": "nodejs20"
+    }
+  ]
+}
+

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="12dp">
+
+    <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"/>
+
+    <!-- HEADER DEL CHAT: Avatar + Nombre + Estado -->
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp">
+
+        <ImageView
+                android:id="@+id/imgAvatar"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_profile_placeholder"
+                android:background="@drawable/circle_bg"
+                android:layout_marginEnd="8dp" />
+
+        <TextView
+                android:id="@+id/tvChatTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nombre del usuario"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp" />
+
+        <View
+                android:id="@+id/onlineIndicator"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:background="@drawable/online_indicator_green"
+                android:layout_marginEnd="4dp"
+                android:visibility="gone"/>
+
+        <TextView
+                android:id="@+id/tvOnlineStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="En línea"
+                android:textSize="14sp"
+                android:textColor="#4CAF50"
+                android:visibility="gone"/>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvMessages"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingBottom="8dp"/>
+
+    <!-- Typing indicator -->
+    <TextView
+            android:id="@+id/tvTypingIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Usuario está escribiendo..."
+            android:textSize="14sp"
+            android:textColor="#888"
+            android:visibility="gone"
+            android:padding="8dp"/>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+        <Button
+                android:id="@+id/btnAttachImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Imagen"
+                android:layout_marginEnd="8dp"/>
+
+        <EditText
+                android:id="@+id/etMessage"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Escribe un mensaje"
+                android:minHeight="48dp"
+                android:padding="12dp"/>
+
+        <Button
+                android:id="@+id/btnSend"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enviar"/>
+    </LinearLayout>
+</LinearLayout>
