@@ -76,6 +76,33 @@ public class ListenMessagesUseCase {
         return registration;
     }
 
+    public com.google.firebase.firestore.ListenerRegistration listenForMessagesWithoutMarkingAsRead(
+            String chatId,
+            int limit,
+            java.util.function.Consumer<java.util.List<com.example.proyectoandroid.data.model.Message>> onInitialMessages,
+            java.util.function.Consumer<com.example.proyectoandroid.data.model.Message> onNewMessage,
+            java.util.function.Consumer<com.example.proyectoandroid.data.model.Message> onMessageUpdated) {
+
+        stopListeningForMessages(chatId);
+
+        com.google.firebase.firestore.ListenerRegistration registration = messageRepository.addChatMessagesListener(
+                chatId,
+                limit,
+                messages -> {
+                    if (onInitialMessages != null) onInitialMessages.accept(messages);
+                },
+                message -> {
+                    if (onNewMessage != null) onNewMessage.accept(message);
+                },
+                message -> {
+                    if (onMessageUpdated != null) onMessageUpdated.accept(message);
+                }
+        );
+
+        activeListeners.put(chatId, registration);
+        return registration;
+    }
+
     public void stopListeningForMessages(String chatId) {
         ListenerRegistration registration = activeListeners.get(chatId);
         if (registration != null) {
@@ -110,6 +137,10 @@ public class ListenMessagesUseCase {
 
     public CompletableFuture<Result<Message>> uploadAndSendImageMessage(Context context, String chatId, Uri imageUri) {
         return messageRepository.uploadAndSendImageMessage(context, chatId, imageUri);
+    }
+
+    public CompletableFuture<Result<Void>> markChatAsRead(String chatId) {
+        return messageRepository.markMessagesAsRead(chatId);
     }
 
     public void cleanup() {

@@ -200,6 +200,7 @@ public class FirestoreDataSource {
         updates.put("lastMessageSenderEmail", message.getSenderEmail() != null ? message.getSenderEmail() : "");
         updates.put("lastMessageTimestamp", FieldValue.serverTimestamp());
         updates.put("lastMessageRead", false);
+        updates.put("lastMessageType", message.getMessageType());
 
         chatRef.update(updates)
             .addOnSuccessListener(aVoid -> resultFuture.complete(new Result.Success<>(null)))
@@ -405,42 +406,38 @@ public class FirestoreDataSource {
 
         firestore.collection(FirebaseCollections.CHATS)
             .document(chatId)
-            .collection(FirebaseCollections.MESSAGES)
-            .whereEqualTo("read", false)
-            .whereNotEqualTo("senderId", userId)
-            .get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                if (queryDocumentSnapshots.isEmpty()) {
-                    // También marcar el chat como leído para ocultar resaltado
-                    firestore.collection(FirebaseCollections.CHATS)
-                        .document(chatId)
-                        .update("lastMessageRead", true)
-                        .addOnSuccessListener(a -> resultFuture.complete(new Result.Success<>(null)))
-                        .addOnFailureListener(e -> resultFuture.complete(new Result.Error<>(e.getMessage())));
-                    return;
-                }
+            .update("lastMessageRead", true)
+            .addOnSuccessListener(aVoid -> {
+                firestore.collection(FirebaseCollections.CHATS)
+                    .document(chatId)
+                    .collection(FirebaseCollections.MESSAGES)
+                    .whereEqualTo("read", false)
+                    .whereNotEqualTo("senderId", userId)
+                    .get()
+                    .addOnSuccessListener(querySnapshots -> {
+                        if (querySnapshots.isEmpty()) {
+                            resultFuture.complete(new Result.Success<>(null));
+                            return;
+                        }
 
-                List<CompletableFuture<Void>> futures = new ArrayList<>();
+                        List<CompletableFuture<Void>> futures = new ArrayList<>();
+                        for (QueryDocumentSnapshot doc : querySnapshots) {
+                            CompletableFuture<Void> future = new CompletableFuture<>();
+                            futures.add(future);
 
-                for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                    CompletableFuture<Void> future = new CompletableFuture<>();
-                    futures.add(future);
+                            doc.getReference().update("read", true)
+                                .addOnSuccessListener(a -> future.complete(null))
+                                .addOnFailureListener(future::completeExceptionally);
+                        }
 
-                    document.getReference().update("read", true)
-                        .addOnSuccessListener(aVoid -> future.complete(null))
-                        .addOnFailureListener(future::completeExceptionally);
-                }
-
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                    .thenRun(() -> firestore.collection(FirebaseCollections.CHATS)
-                            .document(chatId)
-                            .update("lastMessageRead", true)
-                            .addOnSuccessListener(a -> resultFuture.complete(new Result.Success<>(null)))
-                            .addOnFailureListener(e -> resultFuture.complete(new Result.Error<>(e.getMessage()))))
-                    .exceptionally(e -> {
-                        resultFuture.complete(new Result.Error<>(e.getMessage()));
-                        return null;
-                    });
+                        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                            .thenRun(() -> resultFuture.complete(new Result.Success<>(null)))
+                            .exceptionally(e -> {
+                                resultFuture.complete(new Result.Error<>(e.getMessage()));
+                                return null;
+                            });
+                    })
+                    .addOnFailureListener(e -> resultFuture.complete(new Result.Error<>(e.getMessage())));
             })
             .addOnFailureListener(e -> resultFuture.complete(new Result.Error<>(e.getMessage())));
 

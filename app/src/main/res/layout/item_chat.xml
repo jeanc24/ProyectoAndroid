@@ -1,24 +1,28 @@
-<LinearLayout
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:gravity="center_vertical">
+        android:padding="16dp">
 
     <ImageView
             android:id="@+id/chatAvatar"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:src="@mipmap/ic_launcher"
-            android:layout_marginEnd="12dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
             android:background="@drawable/circle_bg"/>
 
     <LinearLayout
             android:orientation="vertical"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1">
+            android:layout_toStartOf="@+id/unreadDot"
+            android:layout_toEndOf="@id/chatAvatar"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp">
 
         <TextView
                 android:id="@+id/chatTitle"
@@ -50,7 +54,6 @@
                     android:layout_width="0dp"
                     android:layout_weight="1"
                     android:layout_height="wrap_content"/>
-            <!-- Nuevo TextView para la hora/día -->
             <TextView
                     android:id="@+id/chatTimestamp"
                     android:text="12:34"
@@ -65,9 +68,11 @@
 
     <View
             android:id="@+id/unreadDot"
-            android:layout_width="10dp"
-            android:layout_height="10dp"
-            android:layout_marginStart="12dp"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="8dp"
             android:background="@drawable/unread_dot"
             android:visibility="gone"/>
-</LinearLayout>
+</RelativeLayout>

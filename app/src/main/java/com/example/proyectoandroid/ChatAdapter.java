@@ -89,14 +89,22 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         Log.d(TAG, "Chat: " + chat.getChatId() + ", Tipo: " + msgType + ", Contenido: " + (lastMsg != null ? lastMsg : "null"));
 
         if (msgType == 0 && lastMsg != null && !lastMsg.isEmpty()) { // TEXTO
-            // CAMBIO CLAVE: Intentar descifrar SIEMPRE para mensajes de texto
+            // Intentar descifrar hasta 2 veces (compatibilidad con mensajes doble-cifrados)
             try {
-                previewMsg = CryptoUtils.decrypt(lastMsg);
-                Log.d(TAG, "✅ Descifrado exitoso: " + previewMsg.substring(0, Math.min(previewMsg.length(), 20)) + "...");
+                String tmp = CryptoUtils.decrypt(lastMsg);
+                try {
+                    tmp = CryptoUtils.decrypt(tmp);
+                } catch (Exception ignored) {
+                    // una pasada fue suficiente
+                }
+                previewMsg = tmp;
             } catch (Exception e) {
-                // Si falla el descifrado, mostrar error claro
-                Log.e(TAG, "❌ Error descifrado: " + e.getMessage());
+                Log.w(TAG, "No se pudo descifrar preview, mostrando crudo: " + e.getMessage());
                 previewMsg = lastMsg; // Fallback al mensaje original si falla
+            }
+            // Truncar a 15 caracteres con puntos suspensivos
+            if (previewMsg != null && previewMsg.length() > 15) {
+                previewMsg = previewMsg.substring(0, 15) + "...";
             }
         } else if (msgType == 1) { // IMAGEN
             previewMsg = "[Imagen]";
@@ -114,9 +122,13 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
             holder.chatLastSender.setText(sender != null ? sender + ":" : "");
         }
 
-        // Mostrar punto de no leído
-        boolean showUnreadDot = !chat.isLastMessageRead() && chat.getLastMessageSenderId() != null && !chat.getLastMessageSenderId().equals(currentUserId);
-        holder.unreadDot.setVisibility(showUnreadDot ? View.VISIBLE : View.GONE);
+        boolean isFromOther = chat.getLastMessageSenderId() != null && !chat.getLastMessageSenderId().equals(currentUserId);
+        holder.unreadDot.setVisibility(isFromOther ? View.VISIBLE : View.GONE);
+
+        Log.d(TAG, "Chat: " + chat.getChatId() +
+                ", lastMsgRead: " + chat.isLastMessageRead() +
+                ", fromOther: " + isFromOther +
+                ", dot: " + (isFromOther ? "VISIBLE" : "GONE"));
 
         holder.itemView.setOnClickListener(view -> {
             if (listener != null) listener.onChatClick(chat);

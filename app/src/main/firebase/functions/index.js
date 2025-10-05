@@ -1,6 +1,40 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const crypto = require('crypto');
 admin.initializeApp();
+
+function getAesKey() {
+  const cfg = (functions.config && functions.config().crypto && functions.config().crypto.key) || null;
+  return cfg || process.env.CHAT_AES_KEY || 'MySuperSecretKey'; // 16 bytes
+}
+
+function decryptAESBase64_ECB_PKCS5(encryptedBase64, keyStr) {
+  const key = Buffer.from(keyStr, 'utf8');
+  const decipher = crypto.createDecipheriv('aes-128-ecb', key, null);
+  decipher.setAutoPadding(true);
+  const cipherBytes = Buffer.from(encryptedBase64, 'base64');
+  const decrypted = Buffer.concat([decipher.update(cipherBytes), decipher.final()]);
+  return decrypted.toString('utf8');
+}
+
+function tryDecryptContent(content) {
+  if (!content || typeof content !== 'string') return content;
+  const key = getAesKey();
+  // Intento 1: descifrar una vez
+  try {
+    let plain = decryptAESBase64_ECB_PKCS5(content, key);
+    // Intento 2: compatibilidad por si viene doble-cifrado
+    try {
+      plain = decryptAESBase64_ECB_PKCS5(plain, key);
+    } catch (_) {
+      // una pasada fue suficiente
+    }
+    return plain;
+  } catch (e) {
+    // Fallback: devolver tal cual si no es Base64 o no está cifrado con nuestra clave
+    return content;
+  }
+}
 
 exports.sendMessageNotification = functions.firestore
   .document('chats/{chatId}/messages/{messageId}')
@@ -70,9 +104,16 @@ exports.sendMessageNotification = functions.firestore
       const senderName = messageData.senderName || 'Alguien';
       const isImage = messageData.messageType === 1; // 1 == imagen según tu modelo
       const notificationTitle = `Mensaje de ${senderName}`;
-      const notificationBody = isImage
-        ? '📷 Imagen'
-        : (messageData.content || '').toString().slice(0, 100);
+
+      let notificationBody;
+      if (isImage) {
+        notificationBody = '📷 Imagen';
+      } else {
+        const rawContent = (messageData.content || '').toString();
+        const plain = tryDecryptContent(rawContent);
+        // recortar a 100 chars para la notificación
+        notificationBody = plain.length > 100 ? plain.slice(0, 100) + '…' : plain;
+      }
 
       // Mensaje FCM v1 con configuración Android para canal y prioridad
       const baseMessage = {

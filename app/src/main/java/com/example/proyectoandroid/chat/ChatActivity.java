@@ -20,7 +20,6 @@ import com.example.proyectoandroid.data.remote.FirestoreDataSource;
 import com.example.proyectoandroid.di.ServiceLocator;
 import com.example.proyectoandroid.domain.usecase.ListenMessagesUseCase;
 import com.example.proyectoandroid.utils.Result;
-import com.example.proyectoandroid.utils.CryptoUtils;
 import com.squareup.picasso.Picasso;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -119,21 +118,15 @@ public class ChatActivity extends AppCompatActivity {
 
         listenMessagesUseCase = ServiceLocator.getInstance(getApplicationContext()).provideListenMessagesUseCase();
 
-        messagesListener = listenMessagesUseCase.listenForMessages(
+        messagesListener = listenMessagesUseCase.listenForMessagesWithoutMarkingAsRead(
                 chatId,
                 50,
                 initialMessages -> runOnUiThread(() -> {
-                    // DESCIFRAR todos los mensajes antes de mostrar
-                    List<Message> decryptedMessages = new ArrayList<>();
-                    for (Message msg : initialMessages) {
-                        decryptedMessages.add(decryptMessage(msg));
-                    }
-                    messageAdapter.setMessages(decryptedMessages);
+                    messageAdapter.setMessages(initialMessages);
                     rvMessages.scrollToPosition(messageAdapter.getItemCount() - 1);
                 }),
                 newMessage -> runOnUiThread(() -> {
-                    // DESCIFRAR el mensaje antes de agregar
-                    messageAdapter.addMessage(decryptMessage(newMessage));
+                    messageAdapter.addMessage(newMessage);
                     rvMessages.scrollToPosition(messageAdapter.getItemCount() - 1);
                 }),
                 updatedMessage -> runOnUiThread(() -> {
@@ -147,20 +140,15 @@ public class ChatActivity extends AppCompatActivity {
                 Toast.makeText(this, "Escribe un mensaje", Toast.LENGTH_SHORT).show();
                 return;
             }
-            // CIFRAR antes de enviar
-            String encryptedContent;
-            try {
-                encryptedContent = CryptoUtils.encrypt(content);
-            } catch (Exception e) {
-                Toast.makeText(this, "Error cifrando mensaje", Toast.LENGTH_LONG).show();
-                return;
-            }
-            listenMessagesUseCase.sendTextMessage(chatId, encryptedContent)
+            // Enviar el mensaje; el use case cifra internamente
+            listenMessagesUseCase.sendTextMessage(chatId, content)
                     .thenAccept(result -> runOnUiThread(() -> {
                         if (result.isSuccess()) {
                             etMessage.setText("");
+                            // Marcar el chat como leído únicamente después de enviar
+                            listenMessagesUseCase.markChatAsRead(chatId);
                         } else {
-                            String error = ((Result.Error<?>) result).getErrorMessage();
+                            String error = ((com.example.proyectoandroid.utils.Result.Error<?>) result).getErrorMessage();
                             Toast.makeText(this, "Error enviando mensaje: " + error, Toast.LENGTH_LONG).show();
                         }
                     }));
@@ -177,6 +165,8 @@ public class ChatActivity extends AppCompatActivity {
                             setSendingEnabled(true);
                             if (result.isSuccess()) {
                                 Toast.makeText(this, "Imagen enviada", Toast.LENGTH_SHORT).show();
+                                // Marcar el chat como leído tras enviar imagen
+                                listenMessagesUseCase.markChatAsRead(chatId);
                             } else {
                                 String error = ((Result.Error<?>) result).getErrorMessage();
                                 Toast.makeText(this, "Error enviando imagen: " + error, Toast.LENGTH_LONG).show();
@@ -236,19 +226,6 @@ public class ChatActivity extends AppCompatActivity {
         return sdf.format(new Date(lastOnlineMillis));
     }
 
-    // DESCIFRAR el contenido del mensaje
-    private Message decryptMessage(Message msg) {
-        if (msg.getMessageType() == 0 && msg.getContent() != null && !msg.getContent().isEmpty()) { // texto
-            try {
-                String decrypted = CryptoUtils.decrypt(msg.getContent());
-                msg.setContent(decrypted);
-            } catch (Exception e) {
-                msg.setContent("[Error al descifrar]");
-            }
-        }
-        // imágenes u otros tipos pueden manejarse diferente si lo requieres
-        return msg;
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

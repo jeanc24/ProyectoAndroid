@@ -89,16 +89,22 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
         if (holder instanceof TextMessageViewHolder) {
             TextMessageViewHolder h = (TextMessageViewHolder) holder;
-            // DESCIFRA EL TEXTO ANTES DE MOSTRAR
-            String decryptedText = msg.getContent();
-            if (decryptedText != null && !decryptedText.isEmpty()) {
+            // DESCIFRA EL TEXTO ANTES DE MOSTRAR (hasta 2 pasadas por compatibilidad)
+            String textToShow = msg.getContent();
+            if (textToShow != null && !textToShow.isEmpty()) {
                 try {
-                    decryptedText = CryptoUtils.decrypt(decryptedText);
+                    textToShow = CryptoUtils.decrypt(textToShow);
+                    // Intentar una segunda pasada si también está cifrado doble
+                    try {
+                        textToShow = CryptoUtils.decrypt(textToShow);
+                    } catch (Exception ignored) {
+                        // Una sola pasada fue suficiente
+                    }
                 } catch (Exception e) {
-                    decryptedText = "[Error al descifrar]";
+                    textToShow = "[Error al descifrar]";
                 }
             }
-            h.tvText.setText(decryptedText);
+            h.tvText.setText(textToShow);
 
             // Mostrar nombre o email del remitente
             String senderDisplay = "";
