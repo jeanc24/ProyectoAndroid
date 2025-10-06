@@ -6,23 +6,23 @@ public class User {
 
     @DocumentId
     private String documentId;
-
     private String uid;
     private String email;
     private String displayName;
-    private String photoUrl; // Campo principal que usa la app
-    private String profileImageUrl; // Campo legacy de compatibilidad
+    private String photoUrl;
+    private String profileImageUrl;
     private boolean online;
     private long lastOnline;
     private String fcmToken;
 
-    // Campos adicionales que Firestore está esperando
+    // Clave pública para E2EE (añade este campo)
+    private String publicKey; // Base64, puedes guardar la clave pública aquí
+
+    // Nuevos campos para compatibilidad Firestore
     private long lastSeen;
     private long tokenUpdatedAt;
 
-    public User() {
-        // Constructor vacío requerido por Firebase
-    }
+    public User() {}
 
     public User(String uid, String email, String displayName) {
         this.uid = uid;
@@ -51,20 +51,10 @@ public class User {
     public void setDisplayName(String displayName) { this.displayName = displayName; }
 
     public String getPhotoUrl() { return photoUrl; }
-    public void setPhotoUrl(String photoUrl) {
-        this.photoUrl = photoUrl;
-        // Mantener sincronizado el campo legacy por compatibilidad
-        this.profileImageUrl = photoUrl;
-    }
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
 
     public String getProfileImageUrl() { return profileImageUrl; }
-    public void setProfileImageUrl(String profileImageUrl) {
-        this.profileImageUrl = profileImageUrl;
-        // Si photoUrl está vacío, usar este valor
-        if (this.photoUrl == null || this.photoUrl.isEmpty()) {
-            this.photoUrl = profileImageUrl;
-        }
-    }
+    public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
 
     public boolean isOnline() { return online; }
     public void setOnline(boolean online) { this.online = online; }
@@ -80,4 +70,7 @@ public class User {
 
     public long getTokenUpdatedAt() { return tokenUpdatedAt; }
     public void setTokenUpdatedAt(long tokenUpdatedAt) { this.tokenUpdatedAt = tokenUpdatedAt; }
+
+    public String getPublicKey() { return publicKey; }
+    public void setPublicKey(String publicKey) { this.publicKey = publicKey; }
 }
