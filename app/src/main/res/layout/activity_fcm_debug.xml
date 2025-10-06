@@ -63,7 +63,6 @@
             android:layout_height="wrap_content"
             android:text="Probar notificación local"/>
 
-        <!-- Botón Volver que FCMDebugActivity espera -->
         <Button
             android:id="@+id/btn_back"
             android:layout_width="match_parent"
