@@ -2,7 +2,6 @@ package com.example.proyectoandroid.data.model;
 
 import com.google.firebase.firestore.DocumentId;
 import com.google.firebase.firestore.ServerTimestamp;
-
 import java.util.Date;
 
 public class Message {
@@ -11,19 +10,16 @@ public class Message {
     private String chatId;
     private String senderId;
     private String senderName;
-    private String senderEmail; // Nuevo campo
-    private String content;
+    private String senderEmail;
+    private String content; // Cifrado con clave única por chat
     private int messageType; // 0 = texto, 1 = imagen
     private String imageUrl;
     @ServerTimestamp
     private Date timestamp;
     private boolean isRead;
 
-    public Message() {
-        // Constructor vacío requerido por Firebase
-    }
+    public Message() {}
 
-    // Constructor para mensajes de texto
     public Message(String chatId, String senderId, String senderName, String senderEmail, String content, int messageType, String imageUrl) {
         this.chatId = chatId;
         this.senderId = senderId;

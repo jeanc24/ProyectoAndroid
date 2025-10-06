@@ -2,7 +2,6 @@ package com.example.proyectoandroid.data.model;
 
 import com.google.firebase.firestore.DocumentId;
 import com.google.firebase.firestore.ServerTimestamp;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -21,7 +20,7 @@ public class Chat {
     private String chatName;
     private String chatImageUrl;
     private boolean lastMessageRead;
-    private int lastMessageType; // <-- NUEVO CAMPO
+    private int lastMessageType; // 0 = texto, 1 = imagen
 
     public Chat() {
         participantIds = new ArrayList<>();
